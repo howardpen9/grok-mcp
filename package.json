@@ -1,0 +1,58 @@
+{
+  "name": "grok-mcp",
+  "version": "0.1.0",
+  "description": "MCP server that wraps the xAI Grok CLI. Exposes grok_chat / grok_review / grok_consult / grok_challenge tools to any MCP-compatible host (Claude Code, Cursor, Cline, OpenClaw, ...).",
+  "type": "module",
+  "bin": {
+    "grok-mcp": "dist/index.js"
+  },
+  "main": "dist/index.js",
+  "files": [
+    "dist",
+    "README.md",
+    "README.zh-TW.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "grok",
+    "xai",
+    "ai",
+    "claude-code",
+    "cursor",
+    "cline"
+  ],
+  "author": "Howard Peng <howard.peng.tw@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/howardpen9/grok-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/howardpen9/grok-mcp/issues"
+  },
+  "homepage": "https://github.com/howardpen9/grok-mcp#readme",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "strip-ansi": "^7.1.0",
+    "zod": "^3.23.8",
+    "zod-to-json-schema": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
+  }
+}
