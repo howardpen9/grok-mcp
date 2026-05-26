@@ -1,6 +1,6 @@
 {
   "name": "grok-build-mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "MCP server that wraps the xAI Grok CLI. Exposes grok_chat / grok_review / grok_consult / grok_challenge tools to any MCP-compatible host (Claude Code, Cursor, Cline, OpenClaw, ...).",
   "type": "module",
   "bin": {
