@@ -1,4 +1,4 @@
-# grok-mcp
+# grok-build-mcp
 
 > 把 xAI 的 [Grok Build CLI](https://x.ai/news/grok-build-cli) 包成 MCP server，讓 Claude Code、Cursor、Cline、OpenClaw 等 MCP host 都能直接調用 Grok 來做 code review、對抗測試、第二意見諮詢。
 
@@ -27,9 +27,9 @@ English: [README.md](./README.md)
 ## 安裝
 
 ```bash
-npm install -g grok-mcp
+npm install -g grok-build-mcp
 # 或直接 npx 不裝
-npx grok-mcp
+npx grok-build-mcp
 ```
 
 ## 串到 MCP host
@@ -37,7 +37,7 @@ npx grok-mcp
 ### Claude Code
 
 ```bash
-claude mcp add grok npx -- grok-mcp
+claude mcp add grok npx -- grok-build-mcp
 ```
 
 或直接編輯 `~/.claude.json`：
@@ -47,7 +47,7 @@ claude mcp add grok npx -- grok-mcp
   "mcpServers": {
     "grok": {
       "command": "npx",
-      "args": ["-y", "grok-mcp"]
+      "args": ["-y", "grok-build-mcp"]
     }
   }
 }
@@ -62,7 +62,7 @@ claude mcp add grok npx -- grok-mcp
   "mcpServers": {
     "grok": {
       "command": "npx",
-      "args": ["-y", "grok-mcp"]
+      "args": ["-y", "grok-build-mcp"]
     }
   }
 }
@@ -76,14 +76,14 @@ Settings → Cline → MCP Servers：
 {
   "grok": {
     "command": "npx",
-    "args": ["-y", "grok-mcp"]
+    "args": ["-y", "grok-build-mcp"]
   }
 }
 ```
 
 ### 其他 MCP host
 
-`grok-mcp` 跑標準 stdio MCP。任何 client 指向 `npx -y grok-mcp` 即可。
+`grok-build-mcp` 跑標準 stdio MCP。任何 client 指向 `npx -y grok-build-mcp` 即可。
 
 ## Tool 用法
 

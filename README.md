@@ -1,8 +1,8 @@
-# grok-mcp
+# grok-build-mcp
 
 > Bring xAI's [Grok Build CLI](https://x.ai/news/grok-build-cli) into any MCP host as a peer reviewer, adversary, and consultant — alongside whatever main model you're already running.
 
-`grok-mcp` is a small [Model Context Protocol](https://modelcontextprotocol.io) server that wraps the `grok` CLI. Your existing agent (Claude Code, Cursor, Cline, OpenClaw, …) can call into Grok for second-opinion code review, adversarial testing, or extended chat — without leaving its session.
+`grok-build-mcp` is a small [Model Context Protocol](https://modelcontextprotocol.io) server that wraps the `grok` CLI. Your existing agent (Claude Code, Cursor, Cline, OpenClaw, …) can call into Grok for second-opinion code review, adversarial testing, or extended chat — without leaving its session.
 
 繁體中文版：[README.zh-TW.md](./README.zh-TW.md)
 
@@ -29,9 +29,9 @@ Four tools, all stateless, all stdout-only:
 ## Install
 
 ```bash
-npm install -g grok-mcp
+npm install -g grok-build-mcp
 # or use npx — no install needed
-npx grok-mcp
+npx grok-build-mcp
 ```
 
 ## Wire it into your MCP host
@@ -39,7 +39,7 @@ npx grok-mcp
 ### Claude Code
 
 ```bash
-claude mcp add grok npx -- grok-mcp
+claude mcp add grok npx -- grok-build-mcp
 ```
 
 Or edit `~/.claude.json` directly:
@@ -49,7 +49,7 @@ Or edit `~/.claude.json` directly:
   "mcpServers": {
     "grok": {
       "command": "npx",
-      "args": ["-y", "grok-mcp"]
+      "args": ["-y", "grok-build-mcp"]
     }
   }
 }
@@ -64,7 +64,7 @@ Create `.cursor/mcp.json` (project) or `~/.cursor/mcp.json` (global):
   "mcpServers": {
     "grok": {
       "command": "npx",
-      "args": ["-y", "grok-mcp"]
+      "args": ["-y", "grok-build-mcp"]
     }
   }
 }
@@ -78,14 +78,14 @@ Settings → Cline → MCP Servers:
 {
   "grok": {
     "command": "npx",
-    "args": ["-y", "grok-mcp"]
+    "args": ["-y", "grok-build-mcp"]
   }
 }
 ```
 
 ### Any other MCP host
 
-`grok-mcp` speaks plain stdio MCP. Point any client at `npx -y grok-mcp` and it works.
+`grok-build-mcp` speaks plain stdio MCP. Point any client at `npx -y grok-build-mcp` and it works.
 
 ## Tool reference
 
