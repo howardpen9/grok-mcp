@@ -35,20 +35,19 @@ function gitDiff(baseRef: string, cwd?: string): Promise<string> {
   });
 }
 
-const REVIEW_TEMPLATE = (diff: string, focus?: string) => `You are a senior staff engineer doing a rigorous code review.
+const REVIEW_TEMPLATE = (diff: string, focus?: string) => `Review the unified diff below as a senior staff engineer. Reason only from the diff text — do not attempt to read files, run commands, or browse the web.
 
-${focus ? `Focus area: ${focus}\n` : ""}Review the diff below across these dimensions, rating each 1-10:
-1. Correctness — does it do what it claims, edge cases handled?
-2. Readability — naming, structure, comments
-3. Architecture — boundaries, coupling, abstractions
-4. Security — input validation, secrets, injection surfaces
-5. Performance — algorithmic complexity, IO, allocations
+${focus ? `Focus area: ${focus}\n\n` : ""}Score each dimension 1-10:
+1. Correctness
+2. Readability
+3. Architecture
+4. Security
+5. Performance
 
-Output format (markdown):
+Respond in markdown with:
 - One-line verdict (LGTM / Approve with comments / Request changes / Block)
-- Per-dimension score and one-line reason
-- Numbered list of concrete issues with file:line references
-- Suggested fixes for any score <= 6
+- Per-dimension score with a one-line justification
+- A short list of the most important concerns visible in the diff
 
 --- DIFF START ---
 ${diff}

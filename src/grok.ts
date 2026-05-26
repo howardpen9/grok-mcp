@@ -39,6 +39,9 @@ export async function runGrok(
   prompt: string,
   opts: RunGrokOptions = {},
 ): Promise<RunGrokResult> {
+  // Disable agentic behaviour by default: this is a text-completion wrapper,
+  // not an interactive coding session. Permission prompts would hang the
+  // headless subprocess (stdin is closed).
   const args = ["-p", prompt];
   if (opts.model) args.push("--model", opts.model);
   if (opts.extraArgs) args.push(...opts.extraArgs);
