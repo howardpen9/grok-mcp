@@ -93,7 +93,7 @@ Settings → Cline → MCP Servers：
 { "prompt": "兩句話解釋 consistent hashing。" }
 ```
 
-可選 `model` 覆寫預設 Grok model。
+可選 `model` 覆寫預設 Grok model；`timeout`（秒）拉長單次 call 的時限，給 grok-4 長推理用。四個 tool 都接受 `timeout`。
 
 ### `grok_review`
 
@@ -134,9 +134,19 @@ Server 不存 state，caller 每次帶完整 history。一般 MCP host 會自動
 | 環境變數 | 預設值 | 用途 |
 |---------|--------|------|
 | `GROK_MCP_BIN` | `grok` | grok binary 路徑 |
-| `GROK_MCP_TIMEOUT` | `120000` | 單次 call timeout（毫秒） |
+| `GROK_MCP_TIMEOUT` | `300000` | 預設單次 call timeout（毫秒） |
 
 認證與預設 model 在 Grok CLI 自己的 `~/.grok/config.toml`。
+
+### Timeout
+
+grok-4 是 reasoning model，長 prompt 動輒超過兩分鐘。Server 預設單次時限為 **300 秒（5 分鐘）**，有三種調整方式：
+
+- **單次 call** — 對任一 tool 傳 `timeout`（秒）：`{ "prompt": "...", "timeout": 600 }`。
+- **整個 server** — 在 MCP server 的環境變數設 `GROK_MCP_TIMEOUT`（毫秒）。
+- **Host 端** — MCP host 自己也有 request timeout，可能比 server 更早觸發。若上面兩項都調高仍超時，請一併拉高 host 的時限。在 Claude Code 是 `MCP_TIMEOUT`（server 啟動）與 `MCP_TOOL_TIMEOUT`（單次 tool call），單位皆為毫秒。
+
+超時時，錯誤訊息會附上 Grok 在截止前已產生的 partial 輸出，避免快完成的答案整個丟失。
 
 ## Roadmap
 

@@ -17,3 +17,15 @@ export interface ErasedTool {
 export function defineTool<S extends z.ZodTypeAny>(def: ToolDefinition<S>): ErasedTool {
   return def as unknown as ErasedTool;
 }
+
+/** Shared per-call timeout field (seconds). All tools expose this. */
+export const timeoutField = z
+  .number()
+  .positive()
+  .optional()
+  .describe("Per-call timeout in seconds. Defaults to 300. Raise for long grok-4 reasoning.");
+
+/** Convert an optional seconds value into the { timeoutMs } shape runGrok expects. */
+export function timeoutOpts(timeout?: number): { timeoutMs?: number } {
+  return timeout === undefined ? {} : { timeoutMs: Math.round(timeout * 1000) };
+}

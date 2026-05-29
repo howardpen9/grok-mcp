@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import { z } from "zod";
 import { runGrok } from "../grok.js";
-import { defineTool } from "./types.js";
+import { defineTool, timeoutField, timeoutOpts } from "./types.js";
 
 const inputSchema = z.object({
   diff: z.string().optional().describe("Unified diff to review. If omitted, runs `git diff <base_ref>`."),
@@ -15,6 +15,7 @@ const inputSchema = z.object({
     .describe("Optional focus area (e.g. 'security', 'performance', 'API design')."),
   model: z.string().optional(),
   cwd: z.string().optional().describe("Working directory for git diff. Defaults to process cwd."),
+  timeout: timeoutField,
 });
 
 function gitDiff(baseRef: string, cwd?: string): Promise<string> {
@@ -58,12 +59,15 @@ export const grokReview = defineTool({
   description:
     "Have Grok review a git diff. If no diff is provided, runs `git diff <base_ref>...HEAD` (default base: main). Returns a structured review with per-dimension scores.",
   inputSchema,
-  async handler({ diff, base_ref, focus, model, cwd }) {
+  async handler({ diff, base_ref, focus, model, cwd, timeout }) {
     const actualDiff = diff ?? (await gitDiff(base_ref ?? "main", cwd));
     if (!actualDiff.trim()) {
       return "No diff to review (empty result from git diff).";
     }
-    const { stdout } = await runGrok(REVIEW_TEMPLATE(actualDiff, focus), { model });
+    const { stdout } = await runGrok(REVIEW_TEMPLATE(actualDiff, focus), {
+      model,
+      ...timeoutOpts(timeout),
+    });
     return stdout;
   },
 });

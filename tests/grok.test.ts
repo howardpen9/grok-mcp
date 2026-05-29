@@ -113,6 +113,20 @@ describe("runGrok", () => {
     await expect(promise).rejects.toBeInstanceOf(GrokTimeoutError);
     expect(child.kill).toHaveBeenCalledWith("SIGTERM");
   });
+
+  it("includes partial output and remediation hint in the timeout error", async () => {
+    vi.useFakeTimers();
+    const child = makeChild();
+    spawnMock.mockReturnValue(child);
+    const promise = runGrok("slow", { timeoutMs: 100 });
+    child.stdout.write("half an answer");
+    vi.advanceTimersByTime(101);
+    child.emit("close", null);
+    await expect(promise).rejects.toMatchObject({ partialStdout: "half an answer" });
+    await expect(promise).rejects.toThrow(/timed out after 0s/);
+    await expect(promise).rejects.toThrow(/half an answer/);
+    await expect(promise).rejects.toThrow(/timeout/i);
+  });
 });
 
 describe("checkGrokAvailable", () => {

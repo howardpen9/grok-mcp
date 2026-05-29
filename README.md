@@ -95,7 +95,7 @@ Settings → Cline → MCP Servers:
 { "prompt": "Explain consistent hashing in two sentences." }
 ```
 
-Optional: `model` to override the default Grok model.
+Optional: `model` to override the default Grok model; `timeout` (seconds) to extend the per-call limit for long grok-4 reasoning. All four tools accept `timeout`.
 
 ### `grok_review`
 
@@ -136,9 +136,19 @@ Returns severity-ranked issues (Critical / High / Medium / Low) with concrete re
 | Env var | Default | Purpose |
 |---------|---------|---------|
 | `GROK_MCP_BIN` | `grok` | Path to the `grok` binary |
-| `GROK_MCP_TIMEOUT` | `120000` | Per-call timeout in milliseconds |
+| `GROK_MCP_TIMEOUT` | `300000` | Default per-call timeout in milliseconds |
 
 Authentication and model defaults live in the Grok CLI itself (`~/.grok/config.toml`).
+
+### Timeouts
+
+grok-4 is a reasoning model and long prompts routinely take longer than two minutes. The server's default per-call limit is **300s (5 min)**. You can change it three ways:
+
+- **Per call** — pass `timeout` (seconds) to any tool: `{ "prompt": "...", "timeout": 600 }`.
+- **Per server** — set `GROK_MCP_TIMEOUT` (milliseconds) in the MCP server's env.
+- **Host side** — the MCP host has its *own* request timeout that can fire before the server's. If calls still time out after raising the above, raise the host limit too. In Claude Code that's `MCP_TIMEOUT` (server startup) and `MCP_TOOL_TIMEOUT` (per tool call), both in milliseconds.
+
+On timeout the error includes any partial output Grok produced before the deadline, so you don't lose a near-complete answer.
 
 ## Roadmap
 

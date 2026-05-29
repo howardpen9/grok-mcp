@@ -26,13 +26,24 @@ export class GrokCliError extends Error {
 }
 
 export class GrokTimeoutError extends Error {
-  constructor(public readonly timeoutMs: number) {
-    super(`grok CLI timed out after ${timeoutMs}ms`);
+  constructor(
+    public readonly timeoutMs: number,
+    public readonly partialStdout = "",
+  ) {
+    const seconds = Math.round(timeoutMs / 1000);
+    const hint =
+      `grok CLI timed out after ${seconds}s. grok-4 reasoning on long prompts can exceed this. ` +
+      `Raise it per-call with the "timeout" parameter (seconds), or globally via the GROK_MCP_TIMEOUT env var (ms). ` +
+      `If the MCP host itself times out first, raise its limit too (e.g. Claude Code: MCP_TIMEOUT / MCP_TOOL_TIMEOUT).`;
+    const partial = partialStdout.trim()
+      ? `\n\n--- Partial output received before timeout ---\n${partialStdout.trim()}`
+      : "";
+    super(`${hint}${partial}`);
     this.name = "GrokTimeoutError";
   }
 }
 
-const DEFAULT_TIMEOUT_MS = Number(process.env.GROK_MCP_TIMEOUT ?? 120_000);
+const DEFAULT_TIMEOUT_MS = Number(process.env.GROK_MCP_TIMEOUT ?? 300_000);
 const GROK_BIN = process.env.GROK_MCP_BIN ?? "grok";
 
 export async function runGrok(
@@ -94,7 +105,7 @@ export async function runGrok(
       const cleanStderr = stripAnsi(stderr).trim();
 
       if (timedOut) {
-        reject(new GrokTimeoutError(timeoutMs));
+        reject(new GrokTimeoutError(timeoutMs, cleanStdout));
         return;
       }
 

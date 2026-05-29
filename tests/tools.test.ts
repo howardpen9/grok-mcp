@@ -34,6 +34,19 @@ describe("grok_chat", () => {
     await grokChat.handler({ prompt: "hello world" });
     expect(runGrokMock).toHaveBeenCalledWith("hello world", { model: undefined });
   });
+
+  it("converts the timeout (seconds) into timeoutMs for runGrok", async () => {
+    await grokChat.handler({ prompt: "slow one", timeout: 600 });
+    expect(runGrokMock).toHaveBeenCalledWith("slow one", {
+      model: undefined,
+      timeoutMs: 600_000,
+    });
+  });
+
+  it("omits timeoutMs when timeout is not provided", async () => {
+    await grokChat.handler({ prompt: "default" });
+    expect(runGrokMock.mock.calls[0]?.[1]).not.toHaveProperty("timeoutMs");
+  });
 });
 
 describe("grok_consult", () => {

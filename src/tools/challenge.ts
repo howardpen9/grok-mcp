@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { runGrok } from "../grok.js";
-import { defineTool } from "./types.js";
+import { defineTool, timeoutField, timeoutOpts } from "./types.js";
 
 const inputSchema = z.object({
   code: z.string().min(1).describe("The code or design to attack."),
@@ -9,6 +9,7 @@ const inputSchema = z.object({
     .optional()
     .describe("Optional context: language, framework, intended behaviour, constraints."),
   model: z.string().optional(),
+  timeout: timeoutField,
 });
 
 const CHALLENGE_TEMPLATE = (code: string, context?: string) => `You are a hostile senior engineer tasked with breaking this code. Be specific and ruthless — vague concerns are useless.
@@ -38,8 +39,11 @@ export const grokChallenge = defineTool({
   description:
     "Ask Grok to adversarially break a piece of code: edge cases, race conditions, security holes, adversarial inputs. Returns severity-ranked issues with reproductions.",
   inputSchema,
-  async handler({ code, context, model }) {
-    const { stdout } = await runGrok(CHALLENGE_TEMPLATE(code, context), { model });
+  async handler({ code, context, model, timeout }) {
+    const { stdout } = await runGrok(CHALLENGE_TEMPLATE(code, context), {
+      model,
+      ...timeoutOpts(timeout),
+    });
     return stdout;
   },
 });

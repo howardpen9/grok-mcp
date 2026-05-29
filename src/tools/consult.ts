@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { runGrok } from "../grok.js";
-import { defineTool } from "./types.js";
+import { defineTool, timeoutField, timeoutOpts } from "./types.js";
 
 const messageSchema = z.object({
   role: z.enum(["user", "assistant", "system"]),
@@ -13,6 +13,7 @@ const inputSchema = z.object({
     .min(1)
     .describe("Conversation history. Caller maintains state across turns."),
   model: z.string().optional(),
+  timeout: timeoutField,
 });
 
 function flattenMessages(messages: Array<z.infer<typeof messageSchema>>): string {
@@ -35,9 +36,9 @@ export const grokConsult = defineTool({
   description:
     "Continue a conversation with Grok by replaying the full message history each call. Stateless on the server side — the caller owns the thread.",
   inputSchema,
-  async handler({ messages, model }) {
+  async handler({ messages, model, timeout }) {
     const prompt = flattenMessages(messages);
-    const { stdout } = await runGrok(prompt, { model });
+    const { stdout } = await runGrok(prompt, { model, ...timeoutOpts(timeout) });
     return stdout;
   },
 });
