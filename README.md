@@ -20,11 +20,11 @@ Four tools, all stateless, all stdout-only:
 ## Prerequisites
 
 - Node.js ≥ 18
-- The Grok CLI installed and authenticated:
+- The Grok CLI installed:
   ```bash
   curl -fsSL https://x.ai/cli/install.sh | bash
-  grok  # first run handles auth
   ```
+- An auth method — either browser OAuth (`grok` once interactively) **or** an `XAI_API_KEY` from [console.x.ai](https://console.x.ai). See [Authentication](#authentication) below.
 
 ## Install
 
@@ -34,15 +34,51 @@ npm install -g grok-build-mcp
 npx grok-build-mcp
 ```
 
+## Authentication
+
+The wrapped Grok CLI supports two auth methods; `grok-build-mcp` inherits whichever is active.
+
+| Method | Best for | Rate limits |
+|--------|----------|-------------|
+| **API key** (`XAI_API_KEY` env var) | MCP / CI / automation | Pay-per-call, no subscription cap |
+| **Browser OAuth** (`grok` interactive login) | Local interactive use | Subject to your grok.com plan tier |
+
+Per [xAI's auth precedence](https://docs.x.ai/docs/api-reference#authentication), `XAI_API_KEY` always wins over `~/.grok/auth.json`. So you can keep your browser login for interactive `grok` use and override it *just for this MCP server* by setting `XAI_API_KEY` in the server's env block:
+
+```json
+{
+  "mcpServers": {
+    "grok": {
+      "command": "npx",
+      "args": ["-y", "grok-build-mcp"],
+      "env": {
+        "XAI_API_KEY": "xai-...",
+        "GROK_MCP_TIMEOUT": "600000"
+      }
+    }
+  }
+}
+```
+
+Treat the key file as a secret — it ends up in your MCP host's config (e.g. `~/.claude.json`), which is plain JSON on disk.
+
 ## Wire it into your MCP host
 
 ### Claude Code
 
+Recommended — use `add-json` so the env block parses cleanly:
+
 ```bash
-claude mcp add grok npx -- grok-build-mcp
+claude mcp add-json -s user grok '{
+  "command": "npx",
+  "args": ["-y", "grok-build-mcp"],
+  "env": { "XAI_API_KEY": "xai-...", "GROK_MCP_TIMEOUT": "600000" }
+}'
 ```
 
-Or edit `~/.claude.json` directly:
+> **Why `add-json` not `claude mcp add -e ...`?** The `-e KEY=val` flag is variadic and will greedily consume the server name as another env value if you pass more than one. `add-json` sidesteps that footgun entirely.
+
+Or edit `~/.claude.json` directly. Minimal (OAuth fallback):
 
 ```json
 {
@@ -135,10 +171,11 @@ Returns severity-ranked issues (Critical / High / Medium / Low) with concrete re
 
 | Env var | Default | Purpose |
 |---------|---------|---------|
+| `XAI_API_KEY` | *(unset — falls back to OAuth)* | API key from [console.x.ai](https://console.x.ai). When set, overrides `~/.grok/auth.json` and switches the server to pay-per-call billing with no subscription rate cap. See [Authentication](#authentication). |
 | `GROK_MCP_BIN` | `grok` | Path to the `grok` binary |
 | `GROK_MCP_TIMEOUT` | `300000` | Default per-call timeout in milliseconds |
 
-Authentication and model defaults live in the Grok CLI itself (`~/.grok/config.toml`).
+Model defaults live in the Grok CLI itself (`~/.grok/config.toml`).
 
 ### Timeouts
 
