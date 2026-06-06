@@ -1,11 +1,11 @@
 # grok-mcp
 
-[![npm version](https://img.shields.io/npm/v/grok-mcp.svg)](https://www.npmjs.com/package/grok-mcp)
+[![npm version](https://img.shields.io/npm/v/grok-cli-mcp.svg)](https://www.npmjs.com/package/grok-cli-mcp)
 [![MCP Registry](https://img.shields.io/badge/MCP%20Registry-published-success)](https://registry.modelcontextprotocol.io/)
 
 > Use Grok (via the official xAI [Grok CLI](https://x.ai/news/grok-build-cli)) as a **peer code reviewer, adversary, and consultant** inside Claude Code, Cursor, Cline, OpenClaw, and any other MCP host.
 
-`grok-mcp` is a [Model Context Protocol](https://modelcontextprotocol.io) server that wraps the `grok` CLI. It gives your primary agent (Claude, Cursor, etc.) four tools so it can delegate to Grok for second opinions without leaving the session:
+`grok-mcp` (npm: [`grok-cli-mcp`](https://www.npmjs.com/package/grok-cli-mcp)) is a [Model Context Protocol](https://modelcontextprotocol.io) server that wraps the `grok` CLI. It gives your primary agent (Claude, Cursor, etc.) four tools so it can delegate to Grok for second opinions without leaving the session:
 
 - `grok_review` — structured diff review with per-dimension scores
 - `grok_challenge` — adversarial bug/race/security hunting
@@ -41,9 +41,9 @@ Four tools, all stateless, all stdout-only:
 ## Install
 
 ```bash
-npm install -g grok-mcp
+npm install -g grok-cli-mcp
 # or use npx — no install needed
-npx grok-mcp
+npx grok-cli-mcp
 ```
 
 ## Authentication
@@ -62,7 +62,7 @@ Per [xAI's auth precedence](https://docs.x.ai/docs/api-reference#authentication)
   "mcpServers": {
     "grok": {
       "command": "npx",
-      "args": ["-y", "grok-mcp"],
+      "args": ["-y", "grok-cli-mcp"],
       "env": {
         "XAI_API_KEY": "xai-...",
         "GROK_MCP_TIMEOUT": "600000"
@@ -83,7 +83,7 @@ Recommended — use `add-json` so the env block parses cleanly:
 ```bash
 claude mcp add-json -s user grok '{
   "command": "npx",
-  "args": ["-y", "grok-mcp"],
+  "args": ["-y", "grok-cli-mcp"],
   "env": { "XAI_API_KEY": "xai-...", "GROK_MCP_TIMEOUT": "600000" }
 }'
 ```
@@ -97,7 +97,7 @@ Or edit `~/.claude.json` directly. Minimal (OAuth fallback):
   "mcpServers": {
     "grok": {
       "command": "npx",
-      "args": ["-y", "grok-mcp"]
+      "args": ["-y", "grok-cli-mcp"]
     }
   }
 }
@@ -112,7 +112,7 @@ Create `.cursor/mcp.json` (project) or `~/.cursor/mcp.json` (global):
   "mcpServers": {
     "grok": {
       "command": "npx",
-      "args": ["-y", "grok-mcp"]
+      "args": ["-y", "grok-cli-mcp"]
     }
   }
 }
@@ -126,14 +126,14 @@ Settings → Cline → MCP Servers:
 {
   "grok": {
     "command": "npx",
-    "args": ["-y", "grok-mcp"]
+    "args": ["-y", "grok-cli-mcp"]
   }
 }
 ```
 
 ### Any other MCP host
 
-`grok-mcp` speaks plain stdio MCP. Point any client at `npx -y grok-mcp` and it works.
+`grok-mcp` speaks plain stdio MCP. Point any client at `npx -y grok-cli-mcp` and it works.
 
 ## Tool reference
 

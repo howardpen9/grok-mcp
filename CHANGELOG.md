@@ -5,20 +5,25 @@ All notable changes to this project are documented here. Format follows [Keep a 
 ## [0.1.3] - 2026-06-06
 
 ### Changed
-- Renamed npm package from `grok-build-mcp` to `grok-mcp` for clearer discoverability.
-- Binary command renamed: `grok-build-mcp` → `grok-mcp`.
+- Renamed npm package from `grok-build-mcp` to `grok-cli-mcp` (the `grok-mcp` name was already taken on npm by an unrelated project — a Grok HTTP API integration, not a CLI wrapper).
+- Binary command renamed: `grok-build-mcp` → `grok-cli-mcp`.
 - Strengthened README value proposition (peer reviewer / adversary / second-opinion).
 - Server version now read dynamically from `package.json` instead of hardcoded.
 
 ### Added
-- `mcpName` field for MCP Registry ownership verification.
+- `mcpName: io.github.howardpen9/grok-mcp` field for MCP Registry ownership verification (registry identity stays `grok-mcp` even though the npm install identifier is `grok-cli-mcp`).
 - `smithery.yaml` for Smithery one-click install.
 - `.github/workflows/ci.yml` — GitHub Actions CI (build + test on push/PR to main).
 - README badges (npm + MCP Registry) and "Why grok-mcp?" positioning section.
 - `docs/improvement-plan.md` capturing the discoverability roadmap.
 
 ### Deprecated
-- `grok-build-mcp` npm package — use `grok-mcp` instead.
+- `grok-build-mcp` npm package — use `grok-cli-mcp` instead.
+
+### Naming notes
+- Brand / GitHub repo / MCP server identity: **`grok-mcp`** (unchanged).
+- npm install identifier: **`grok-cli-mcp`** (new).
+- MCP Registry name: **`io.github.howardpen9/grok-mcp`**.
 
 ## [0.1.2] - 2026-06-02
 
