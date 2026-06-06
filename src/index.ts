@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
@@ -15,11 +18,16 @@ import type { ErasedTool } from "./tools/types.js";
 
 const TOOLS: ErasedTool[] = [grokChat, grokReview, grokConsult, grokChallenge];
 
+const here = dirname(fileURLToPath(import.meta.url));
+const pkg = JSON.parse(
+  readFileSync(join(here, "..", "package.json"), "utf8"),
+) as { version: string };
+
 async function main() {
   const server = new Server(
     {
       name: "grok-mcp",
-      version: "0.1.2",
+      version: pkg.version,
     },
     {
       capabilities: {
