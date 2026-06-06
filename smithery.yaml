@@ -15,7 +15,7 @@ startCommand:
   command: npx
   args:
     - "-y"
-    - "grok-mcp"
+    - "grok-cli-mcp"
   configSchema:
     type: object
     properties:

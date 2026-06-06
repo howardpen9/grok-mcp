@@ -1,11 +1,11 @@
 # grok-mcp
 
-[![npm version](https://img.shields.io/npm/v/grok-mcp.svg)](https://www.npmjs.com/package/grok-mcp)
+[![npm version](https://img.shields.io/npm/v/grok-cli-mcp.svg)](https://www.npmjs.com/package/grok-cli-mcp)
 [![MCP Registry](https://img.shields.io/badge/MCP%20Registry-published-success)](https://registry.modelcontextprotocol.io/)
 
 > 讓 Claude Code、Cursor、Cline、OpenClaw 等 MCP host 透過官方 xAI [Grok CLI](https://x.ai/news/grok-build-cli)，把 **Grok 當成 code reviewer、adversary 與第二意見顧問** 使用。
 
-`grok-mcp` 是 [Model Context Protocol](https://modelcontextprotocol.io) server，將 `grok` CLI 包裝成工具，讓你的主要 agent（Claude、Cursor…）可以隨時叫 Grok 幫忙 review、挑戰、諮詢，而不用切換 session：
+`grok-mcp`（npm 套件名 [`grok-cli-mcp`](https://www.npmjs.com/package/grok-cli-mcp)）是 [Model Context Protocol](https://modelcontextprotocol.io) server，將 `grok` CLI 包裝成工具，讓你的主要 agent（Claude、Cursor…）可以隨時叫 Grok 幫忙 review、挑戰、諮詢，而不用切換 session：
 
 - `grok_review` — 結構化 diff review，附五維度評分
 - `grok_challenge` — 對抗式找 bug / race / security hole
@@ -41,9 +41,9 @@ English: [README.md](./README.md)
 ## 安裝
 
 ```bash
-npm install -g grok-mcp
+npm install -g grok-cli-mcp
 # 或直接 npx 不裝
-npx grok-mcp
+npx grok-cli-mcp
 ```
 
 ## 認證
@@ -62,7 +62,7 @@ npx grok-mcp
   "mcpServers": {
     "grok": {
       "command": "npx",
-      "args": ["-y", "grok-mcp"],
+      "args": ["-y", "grok-cli-mcp"],
       "env": {
         "XAI_API_KEY": "xai-...",
         "GROK_MCP_TIMEOUT": "600000"
@@ -83,7 +83,7 @@ npx grok-mcp
 ```bash
 claude mcp add-json -s user grok '{
   "command": "npx",
-  "args": ["-y", "grok-mcp"],
+  "args": ["-y", "grok-cli-mcp"],
   "env": { "XAI_API_KEY": "xai-...", "GROK_MCP_TIMEOUT": "600000" }
 }'
 ```
@@ -97,7 +97,7 @@ claude mcp add-json -s user grok '{
   "mcpServers": {
     "grok": {
       "command": "npx",
-      "args": ["-y", "grok-mcp"]
+      "args": ["-y", "grok-cli-mcp"]
     }
   }
 }
@@ -112,7 +112,7 @@ claude mcp add-json -s user grok '{
   "mcpServers": {
     "grok": {
       "command": "npx",
-      "args": ["-y", "grok-mcp"]
+      "args": ["-y", "grok-cli-mcp"]
     }
   }
 }
@@ -126,14 +126,14 @@ Settings → Cline → MCP Servers：
 {
   "grok": {
     "command": "npx",
-    "args": ["-y", "grok-mcp"]
+    "args": ["-y", "grok-cli-mcp"]
   }
 }
 ```
 
 ### 其他 MCP host
 
-`grok-mcp` 跑標準 stdio MCP。任何 client 指向 `npx -y grok-mcp` 即可。
+`grok-mcp` 跑標準 stdio MCP。任何 client 指向 `npx -y grok-cli-mcp` 即可。
 
 ## Tool 用法
 
