@@ -1,8 +1,22 @@
-# grok-build-mcp
+# grok-mcp
 
-> 把 xAI 的 [Grok Build CLI](https://x.ai/news/grok-build-cli) 包成 MCP server，讓 Claude Code、Cursor、Cline、OpenClaw 等 MCP host 都能直接調用 Grok 來做 code review、對抗測試、第二意見諮詢。
+[![npm version](https://img.shields.io/npm/v/grok-mcp.svg)](https://www.npmjs.com/package/grok-mcp)
+[![MCP Registry](https://img.shields.io/badge/MCP%20Registry-published-success)](https://registry.modelcontextprotocol.io/)
+
+> 讓 Claude Code、Cursor、Cline、OpenClaw 等 MCP host 透過官方 xAI [Grok CLI](https://x.ai/news/grok-build-cli)，把 **Grok 當成 code reviewer、adversary 與第二意見顧問** 使用。
+
+`grok-mcp` 是 [Model Context Protocol](https://modelcontextprotocol.io) server，將 `grok` CLI 包裝成工具，讓你的主要 agent（Claude、Cursor…）可以隨時叫 Grok 幫忙 review、挑戰、諮詢，而不用切換 session：
+
+- `grok_review` — 結構化 diff review，附五維度評分
+- `grok_challenge` — 對抗式找 bug / race / security hole
+- `grok_consult` — 多輪諮詢（caller 自己重送 history）
+- `grok_chat` — 一次性問答
 
 English: [README.md](./README.md)
+
+## 為什麼用 grok-mcp？
+
+市面上其他 "Grok MCP" 套件大多讓 Claude 可以「使用」Grok 的 chat / search / image 能力。`grok-mcp` 反過來：讓你的主要 coding agent（Claude / Cursor）**請 Grok 來 review、挑戰自己的產出**。換一個 model 攻擊主 agent 的盲點，能抓到單模型 loop 找不到的 bug。
 
 ## 提供什麼
 
@@ -27,14 +41,14 @@ English: [README.md](./README.md)
 ## 安裝
 
 ```bash
-npm install -g grok-build-mcp
+npm install -g grok-mcp
 # 或直接 npx 不裝
-npx grok-build-mcp
+npx grok-mcp
 ```
 
 ## 認證
 
-包裝的 Grok CLI 支援兩種認證方式，`grok-build-mcp` 繼承當前啟用的那一種。
+包裝的 Grok CLI 支援兩種認證方式，`grok-mcp` 繼承當前啟用的那一種。
 
 | 方式 | 適合場景 | Rate limit |
 |------|---------|-----------|
@@ -48,7 +62,7 @@ npx grok-build-mcp
   "mcpServers": {
     "grok": {
       "command": "npx",
-      "args": ["-y", "grok-build-mcp"],
+      "args": ["-y", "grok-mcp"],
       "env": {
         "XAI_API_KEY": "xai-...",
         "GROK_MCP_TIMEOUT": "600000"
@@ -69,7 +83,7 @@ npx grok-build-mcp
 ```bash
 claude mcp add-json -s user grok '{
   "command": "npx",
-  "args": ["-y", "grok-build-mcp"],
+  "args": ["-y", "grok-mcp"],
   "env": { "XAI_API_KEY": "xai-...", "GROK_MCP_TIMEOUT": "600000" }
 }'
 ```
@@ -83,7 +97,7 @@ claude mcp add-json -s user grok '{
   "mcpServers": {
     "grok": {
       "command": "npx",
-      "args": ["-y", "grok-build-mcp"]
+      "args": ["-y", "grok-mcp"]
     }
   }
 }
@@ -98,7 +112,7 @@ claude mcp add-json -s user grok '{
   "mcpServers": {
     "grok": {
       "command": "npx",
-      "args": ["-y", "grok-build-mcp"]
+      "args": ["-y", "grok-mcp"]
     }
   }
 }
@@ -112,14 +126,14 @@ Settings → Cline → MCP Servers：
 {
   "grok": {
     "command": "npx",
-    "args": ["-y", "grok-build-mcp"]
+    "args": ["-y", "grok-mcp"]
   }
 }
 ```
 
 ### 其他 MCP host
 
-`grok-build-mcp` 跑標準 stdio MCP。任何 client 指向 `npx -y grok-build-mcp` 即可。
+`grok-mcp` 跑標準 stdio MCP。任何 client 指向 `npx -y grok-mcp` 即可。
 
 ## Tool 用法
 
@@ -187,9 +201,10 @@ grok-4 是 reasoning model，長 prompt 動輒超過兩分鐘。Server 預設單
 
 ## Roadmap
 
-- v0.1（本版）：四個 stateless tool、stdio transport
-- v0.2：server 端 session 持久化，`grok_consult` 可帶 `conversation_id`
-- v0.3：透過 MCP `progress` notification 做 streaming
+- **v0.1** — 四個 stateless tool、stdio transport（目前）
+- **Discoverability push（v0.1.3）** — 統一命名、MCP Registry、Smithery、glama.ai 上架、加強定位
+- **v0.2** — server 端 session 持久化，`grok_consult` 可帶 `conversation_id`
+- **v0.3** — 透過 MCP `progress` notification 做 streaming
 
 ## 開發
 

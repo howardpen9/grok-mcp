@@ -1,10 +1,22 @@
-# grok-build-mcp
+# grok-mcp
 
-> Bring xAI's [Grok Build CLI](https://x.ai/news/grok-build-cli) into any MCP host as a peer reviewer, adversary, and consultant — alongside whatever main model you're already running.
+[![npm version](https://img.shields.io/npm/v/grok-mcp.svg)](https://www.npmjs.com/package/grok-mcp)
+[![MCP Registry](https://img.shields.io/badge/MCP%20Registry-published-success)](https://registry.modelcontextprotocol.io/)
 
-`grok-build-mcp` is a small [Model Context Protocol](https://modelcontextprotocol.io) server that wraps the `grok` CLI. Your existing agent (Claude Code, Cursor, Cline, OpenClaw, …) can call into Grok for second-opinion code review, adversarial testing, or extended chat — without leaving its session.
+> Use Grok (via the official xAI [Grok CLI](https://x.ai/news/grok-build-cli)) as a **peer code reviewer, adversary, and consultant** inside Claude Code, Cursor, Cline, OpenClaw, and any other MCP host.
 
-繁體中文版：[README.zh-TW.md](./README.zh-TW.md)
+`grok-mcp` is a [Model Context Protocol](https://modelcontextprotocol.io) server that wraps the `grok` CLI. It gives your primary agent (Claude, Cursor, etc.) four tools so it can delegate to Grok for second opinions without leaving the session:
+
+- `grok_review` — structured diff review with per-dimension scores
+- `grok_challenge` — adversarial bug/race/security hunting
+- `grok_consult` — multi-turn consultation (caller owns history)
+- `grok_chat` — one-shot questions
+
+English | [繁體中文](./README.zh-TW.md)
+
+## Why grok-mcp?
+
+Most "Grok MCP" packages expose Grok's chat/search/image capabilities so Claude can *use* Grok. `grok-mcp` does the opposite: it lets your main coding agent (Claude/Cursor/…) **ask Grok to review and attack its own work**. A different model challenging your primary catches bugs single-model loops miss.
 
 ## What you get
 
@@ -29,14 +41,14 @@ Four tools, all stateless, all stdout-only:
 ## Install
 
 ```bash
-npm install -g grok-build-mcp
+npm install -g grok-mcp
 # or use npx — no install needed
-npx grok-build-mcp
+npx grok-mcp
 ```
 
 ## Authentication
 
-The wrapped Grok CLI supports two auth methods; `grok-build-mcp` inherits whichever is active.
+The wrapped Grok CLI supports two auth methods; `grok-mcp` inherits whichever is active.
 
 | Method | Best for | Rate limits |
 |--------|----------|-------------|
@@ -50,7 +62,7 @@ Per [xAI's auth precedence](https://docs.x.ai/docs/api-reference#authentication)
   "mcpServers": {
     "grok": {
       "command": "npx",
-      "args": ["-y", "grok-build-mcp"],
+      "args": ["-y", "grok-mcp"],
       "env": {
         "XAI_API_KEY": "xai-...",
         "GROK_MCP_TIMEOUT": "600000"
@@ -71,7 +83,7 @@ Recommended — use `add-json` so the env block parses cleanly:
 ```bash
 claude mcp add-json -s user grok '{
   "command": "npx",
-  "args": ["-y", "grok-build-mcp"],
+  "args": ["-y", "grok-mcp"],
   "env": { "XAI_API_KEY": "xai-...", "GROK_MCP_TIMEOUT": "600000" }
 }'
 ```
@@ -85,7 +97,7 @@ Or edit `~/.claude.json` directly. Minimal (OAuth fallback):
   "mcpServers": {
     "grok": {
       "command": "npx",
-      "args": ["-y", "grok-build-mcp"]
+      "args": ["-y", "grok-mcp"]
     }
   }
 }
@@ -100,7 +112,7 @@ Create `.cursor/mcp.json` (project) or `~/.cursor/mcp.json` (global):
   "mcpServers": {
     "grok": {
       "command": "npx",
-      "args": ["-y", "grok-build-mcp"]
+      "args": ["-y", "grok-mcp"]
     }
   }
 }
@@ -114,14 +126,14 @@ Settings → Cline → MCP Servers:
 {
   "grok": {
     "command": "npx",
-    "args": ["-y", "grok-build-mcp"]
+    "args": ["-y", "grok-mcp"]
   }
 }
 ```
 
 ### Any other MCP host
 
-`grok-build-mcp` speaks plain stdio MCP. Point any client at `npx -y grok-build-mcp` and it works.
+`grok-mcp` speaks plain stdio MCP. Point any client at `npx -y grok-mcp` and it works.
 
 ## Tool reference
 
@@ -189,9 +201,10 @@ On timeout the error includes any partial output Grok produced before the deadli
 
 ## Roadmap
 
-- v0.1 (this release): four stateless tools, stdio transport
-- v0.2: server-side session persistence so `grok_consult` can take a `conversation_id`
-- v0.3: streaming responses through MCP `progress` notifications
+- **v0.1** — four stateless tools, stdio transport (current)
+- **Discoverability push (v0.1.3)** — naming unification, MCP Registry, Smithery, glama.ai, stronger positioning
+- **v0.2** — server-side session persistence so `grok_consult` can take a `conversation_id`
+- **v0.3** — streaming responses through MCP `progress` notifications
 
 ## Development
 

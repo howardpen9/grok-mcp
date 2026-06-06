@@ -1,0 +1,32 @@
+# Smithery configuration for grok-mcp
+# Docs: https://smithery.ai/docs
+
+name: grok-mcp
+displayName: Grok MCP
+description: |
+  Wraps the official xAI Grok CLI to give Claude Code, Cursor, Cline, and other
+  MCP hosts powerful review, adversarial challenge, consultation, and chat tools
+  powered by Grok. Unique angle: use Grok as a second-opinion peer reviewer
+  while your main agent is Claude or another model.
+repository: https://github.com/howardpen9/grok-mcp
+
+startCommand:
+  type: stdio
+  command: npx
+  args:
+    - "-y"
+    - "grok-mcp"
+  configSchema:
+    type: object
+    properties:
+      XAI_API_KEY:
+        type: string
+        format: password
+        description: "xAI API key (optional). When set, overrides grok CLI OAuth and uses pay-per-call billing."
+      GROK_MCP_TIMEOUT:
+        type: number
+        default: 300000
+        description: "Default per-call timeout in ms (default 300000 = 5min). Raise for grok-4 reasoning."
+  env:
+    XAI_API_KEY: "{{config.XAI_API_KEY}}"
+    GROK_MCP_TIMEOUT: "{{config.GROK_MCP_TIMEOUT}}"
