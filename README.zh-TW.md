@@ -18,11 +18,11 @@ English: [README.md](./README.md)
 ## 前置需求
 
 - Node.js ≥ 18
-- 已安裝並登入 Grok CLI：
+- 已安裝 Grok CLI：
   ```bash
   curl -fsSL https://x.ai/cli/install.sh | bash
-  grok  # 第一次跑會處理登入
   ```
+- 一種認證方式 — 瀏覽器 OAuth（互動跑一次 `grok`）**或**到 [console.x.ai](https://console.x.ai) 拿一把 `XAI_API_KEY`。詳見下方 [認證](#認證)。
 
 ## 安裝
 
@@ -32,15 +32,51 @@ npm install -g grok-build-mcp
 npx grok-build-mcp
 ```
 
+## 認證
+
+包裝的 Grok CLI 支援兩種認證方式，`grok-build-mcp` 繼承當前啟用的那一種。
+
+| 方式 | 適合場景 | Rate limit |
+|------|---------|-----------|
+| **API key**（`XAI_API_KEY` 環境變數）| MCP / CI / 自動化 | 按次計費，無訂閱配額上限 |
+| **瀏覽器 OAuth**（互動跑 `grok` 登入）| 本機互動使用 | 依你的 grok.com 訂閱方案 |
+
+依照 [xAI 認證優先順序](https://docs.x.ai/docs/api-reference#authentication)，`XAI_API_KEY` 永遠勝過 `~/.grok/auth.json`。所以可以保留瀏覽器登入給互動式 `grok` 用，**只在這個 MCP server 的 env block 加 `XAI_API_KEY`** 來覆蓋：
+
+```json
+{
+  "mcpServers": {
+    "grok": {
+      "command": "npx",
+      "args": ["-y", "grok-build-mcp"],
+      "env": {
+        "XAI_API_KEY": "xai-...",
+        "GROK_MCP_TIMEOUT": "600000"
+      }
+    }
+  }
+}
+```
+
+注意 API key 等同密鑰 — 會寫進 MCP host 的設定檔（例如 `~/.claude.json`），磁碟上是明文 JSON。
+
 ## 串到 MCP host
 
 ### Claude Code
 
+推薦用 `add-json`，env block 才會正確 parse：
+
 ```bash
-claude mcp add grok npx -- grok-build-mcp
+claude mcp add-json -s user grok '{
+  "command": "npx",
+  "args": ["-y", "grok-build-mcp"],
+  "env": { "XAI_API_KEY": "xai-...", "GROK_MCP_TIMEOUT": "600000" }
+}'
 ```
 
-或直接編輯 `~/.claude.json`：
+> **為什麼不用 `claude mcp add -e ...`？** `-e KEY=val` 是 variadic flag，傳超過一個 `-e` 時，server 名字會被當成下一個 env value 吃掉。`add-json` 一次到位避開這個坑。
+
+或直接編輯 `~/.claude.json`，最簡寫法（fallback 到 OAuth）：
 
 ```json
 {
@@ -133,10 +169,11 @@ Server 不存 state，caller 每次帶完整 history。一般 MCP host 會自動
 
 | 環境變數 | 預設值 | 用途 |
 |---------|--------|------|
+| `XAI_API_KEY` | *（未設，fallback 到 OAuth）* | 到 [console.x.ai](https://console.x.ai) 拿。設定後會覆蓋 `~/.grok/auth.json`，切到按次計費、無訂閱配額上限。詳見 [認證](#認證)。 |
 | `GROK_MCP_BIN` | `grok` | grok binary 路徑 |
 | `GROK_MCP_TIMEOUT` | `300000` | 預設單次 call timeout（毫秒） |
 
-認證與預設 model 在 Grok CLI 自己的 `~/.grok/config.toml`。
+預設 model 設定在 Grok CLI 自己的 `~/.grok/config.toml`。
 
 ### Timeout
 
