@@ -50,6 +50,8 @@ npm install -g grok-cli-mcp
 npx grok-cli-mcp
 ```
 
+> **為什麼 npm 套件名是 `grok-cli-mcp`？** 因為 `grok-mcp` 這個短名在 npm 上已被另一個無關專案佔走（一個 Grok HTTP API integration）。品牌、GitHub repo、MCP server 內部識別仍是 `grok-mcp`；只有 npm 安裝識別字改用 `grok-cli-mcp` — 反正這個套件就是 wrap 官方 **Grok CLI**，名字也算直白。
+
 ## 認證
 
 包裝的 Grok CLI 支援兩種認證方式，`grok-mcp` 繼承當前啟用的那一種。
@@ -206,7 +208,7 @@ grok-4 是 reasoning model，長 prompt 動輒超過兩分鐘。Server 預設單
 ## Roadmap
 
 - **v0.1** — 四個 stateless tool、stdio transport（目前）
-- **Discoverability push（v0.1.3）** — 統一命名、MCP Registry、Smithery、glama.ai 上架、加強定位
+- **Discoverability push（v0.1.3，已上）** — 統一命名、MCP Registry submission、Smithery、glama.ai 上架、加強定位。完整計畫見 [`docs/improvement-plan.md`](./docs/improvement-plan.md)，實際改了什麼見 [`CHANGELOG.md`](./CHANGELOG.md)。
 - **v0.2** — server 端 session 持久化，`grok_consult` 可帶 `conversation_id`
 - **v0.3** — 透過 MCP `progress` notification 做 streaming
 

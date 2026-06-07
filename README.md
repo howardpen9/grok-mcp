@@ -50,6 +50,8 @@ npm install -g grok-cli-mcp
 npx grok-cli-mcp
 ```
 
+> **Why the npm name is `grok-cli-mcp` instead of `grok-mcp`?** The bare `grok-mcp` name on npm was already taken by an unrelated project (a Grok HTTP-API integration). The brand, GitHub repo, and MCP server identity stay `grok-mcp`; only the npm install identifier is `grok-cli-mcp` — chosen to highlight that this server wraps the official **Grok CLI**.
+
 ## Authentication
 
 The wrapped Grok CLI supports two auth methods; `grok-mcp` inherits whichever is active.
@@ -206,7 +208,7 @@ On timeout the error includes any partial output Grok produced before the deadli
 ## Roadmap
 
 - **v0.1** — four stateless tools, stdio transport (current)
-- **Discoverability push (v0.1.3)** — naming unification, MCP Registry, Smithery, glama.ai, stronger positioning
+- **Discoverability push (v0.1.3, shipped)** — naming unification, MCP Registry submission, Smithery, glama.ai, stronger positioning. See [`docs/improvement-plan.md`](./docs/improvement-plan.md) for the full plan and [`CHANGELOG.md`](./CHANGELOG.md) for what landed.
 - **v0.2** — server-side session persistence so `grok_consult` can take a `conversation_id`
 - **v0.3** — streaming responses through MCP `progress` notifications
 
