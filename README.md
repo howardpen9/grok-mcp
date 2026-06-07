@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./assets/social-preview.png" alt="grok-mcp — MCP server that lets Claude use Grok as a peer reviewer, adversary, and consultant" width="720" />
+</p>
+
 # grok-mcp
 
 [![npm version](https://img.shields.io/npm/v/grok-cli-mcp.svg)](https://www.npmjs.com/package/grok-cli-mcp)

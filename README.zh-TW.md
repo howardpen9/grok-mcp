@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./assets/social-preview.png" alt="grok-mcp — 讓 Claude 把 Grok 當 reviewer、adversary、第二意見顧問用" width="720" />
+</p>
+
 # grok-mcp
 
 [![npm version](https://img.shields.io/npm/v/grok-cli-mcp.svg)](https://www.npmjs.com/package/grok-cli-mcp)
