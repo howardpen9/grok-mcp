@@ -268,6 +268,11 @@ npm test
 npm run build
 ```
 
+## Contact
+
+Bug reports & feature requests → [GitHub issues](https://github.com/howardpen9/grok-mcp/issues).
+DMs welcome on X: [@0xHoward_Peng](https://x.com/0xHoward_Peng).
+
 ## License
 
 MIT
