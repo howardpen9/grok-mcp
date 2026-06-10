@@ -1,0 +1,232 @@
+#!/usr/bin/env node
+/**
+ * grok-review-ci — run grok_review in JSON mode against a git diff,
+ * emit a markdown summary, and exit non-zero on gated verdicts.
+ *
+ * Designed for GitHub Actions / any CI. Writes to $GITHUB_STEP_SUMMARY
+ * when present so the verdict shows up directly on the workflow run page.
+ */
+import { readFileSync, writeFileSync, appendFileSync } from "node:fs";
+import { runReview, ReviewParseError, type ReviewJson } from "./tools/review.js";
+import { GrokCliError, GrokTimeoutError } from "./grok.js";
+
+interface CliArgs {
+  base: string;
+  focus?: string;
+  model?: string;
+  cwd?: string;
+  gateOn: string[];
+  minScore?: number;
+  summaryOut?: string;
+  jsonOut?: string;
+  diffFile?: string;
+  timeout?: number;
+  help: boolean;
+}
+
+const HELP = `grok-review-ci — gate PRs with a Grok JSON review.
+
+Usage: grok-review-ci [options]
+
+Options:
+  --base <ref>           Git ref to diff against. Default: origin/main
+  --focus <area>         Focus area (e.g. security, performance)
+  --model <name>         Grok model override
+  --cwd <dir>            Working directory for git diff
+  --diff-file <path>     Read diff from file instead of running git
+  --gate-on <list>       Comma-separated verdicts that cause exit 1.
+                         Default: block. Options: block,request_changes,approve_with_comments,approve
+  --min-score <n>        Also fail if any dimension score < n (0-10)
+  --summary-out <path>   Write markdown summary here.
+                         Defaults to $GITHUB_STEP_SUMMARY when set.
+  --json-out <path>      Write raw review JSON here.
+                         Defaults to $GROK_REVIEW_JSON_OUT when set.
+  --timeout <seconds>    Per-call timeout. Default: server default (300s)
+  --help, -h             Show this help
+
+Exit codes:
+  0  passed (verdict not in --gate-on and all scores >= --min-score)
+  1  gated (verdict matched --gate-on or score below threshold)
+  2  setup or parse error (no diff, Grok output not parseable, CLI missing)
+`;
+
+function parseArgs(argv: string[]): CliArgs {
+  const out: CliArgs = {
+    base: process.env.GROK_REVIEW_BASE ?? "origin/main",
+    gateOn: ["block"],
+    summaryOut: process.env.GITHUB_STEP_SUMMARY ?? undefined,
+    jsonOut: process.env.GROK_REVIEW_JSON_OUT ?? undefined,
+    help: false,
+  };
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i];
+    const next = () => {
+      const v = argv[++i];
+      if (v === undefined) throw new Error(`Missing value for ${a}`);
+      return v;
+    };
+    switch (a) {
+      case "--base": out.base = next(); break;
+      case "--focus": out.focus = next(); break;
+      case "--model": out.model = next(); break;
+      case "--cwd": out.cwd = next(); break;
+      case "--diff-file": out.diffFile = next(); break;
+      case "--gate-on":
+        out.gateOn = next().split(",").map((s) => s.trim()).filter(Boolean);
+        break;
+      case "--min-score": out.minScore = Number(next()); break;
+      case "--summary-out": out.summaryOut = next(); break;
+      case "--json-out": out.jsonOut = next(); break;
+      case "--timeout": out.timeout = Number(next()); break;
+      case "-h":
+      case "--help": out.help = true; break;
+      default:
+        throw new Error(`Unknown argument: ${a}`);
+    }
+  }
+  return out;
+}
+
+function scoreEmoji(s: number): string {
+  if (s >= 9) return "🟢";
+  if (s >= 7) return "🟡";
+  if (s >= 5) return "🟠";
+  return "🔴";
+}
+
+function verdictBadge(v: ReviewJson["verdict"]): string {
+  switch (v) {
+    case "approve": return "✅ Approve";
+    case "approve_with_comments": return "💬 Approve with comments";
+    case "request_changes": return "⚠️ Request changes";
+    case "block": return "⛔ Block";
+  }
+}
+
+function renderMarkdown(review: ReviewJson, gated: boolean, gateReason: string | null): string {
+  const lines: string[] = [];
+  lines.push(`## Grok review — ${verdictBadge(review.verdict)}`);
+  lines.push("");
+  lines.push(review.summary);
+  lines.push("");
+  if (gated && gateReason) {
+    lines.push(`> **CI gate triggered:** ${gateReason}`);
+    lines.push("");
+  }
+  lines.push("| Dimension | Score |");
+  lines.push("|-----------|-------|");
+  for (const [k, v] of Object.entries(review.scores)) {
+    lines.push(`| ${k} | ${scoreEmoji(v)} ${v}/10 |`);
+  }
+  lines.push("");
+  if (review.blockers.length > 0) {
+    lines.push("### Blockers");
+    lines.push("");
+    for (const b of review.blockers) {
+      const loc = b.file ? ` — \`${b.file}${b.line ? `:${b.line}` : ""}\`` : "";
+      lines.push(`- **[${b.severity.toUpperCase()}] ${b.title}**${loc}`);
+      lines.push(`  - ${b.reason}`);
+      if (b.fix) lines.push(`  - _Fix:_ ${b.fix}`);
+    }
+    lines.push("");
+  }
+  if (review.notes.length > 0) {
+    lines.push("### Notes");
+    lines.push("");
+    for (const n of review.notes) lines.push(`- ${n}`);
+    lines.push("");
+  }
+  lines.push("---");
+  lines.push(`<sub>Generated by [grok-mcp](https://github.com/howardpen9/grok-mcp) · \`grok-review-ci\`</sub>`);
+  return lines.join("\n");
+}
+
+function writeSummary(path: string | undefined, body: string): void {
+  if (!path) return;
+  // GITHUB_STEP_SUMMARY is appended in Actions; treat any path the same way for idempotency.
+  appendFileSync(path, body + "\n");
+}
+
+async function main(): Promise<void> {
+  let args: CliArgs;
+  try {
+    args = parseArgs(process.argv.slice(2));
+  } catch (err) {
+    process.stderr.write(`${err instanceof Error ? err.message : String(err)}\n\n${HELP}`);
+    process.exit(2);
+  }
+
+  if (args.help) {
+    process.stdout.write(HELP);
+    process.exit(0);
+  }
+
+  const diff = args.diffFile ? readFileSync(args.diffFile, "utf8") : undefined;
+
+  let result;
+  try {
+    result = await runReview({
+      diff,
+      base_ref: args.base,
+      focus: args.focus,
+      format: "json",
+      model: args.model,
+      cwd: args.cwd,
+      timeout: args.timeout,
+    });
+  } catch (err) {
+    if (err instanceof ReviewParseError) {
+      process.stderr.write(`grok-review-ci: ${err.message}\n\nRaw Grok output:\n${err.rawOutput}\n`);
+    } else if (err instanceof GrokCliError) {
+      process.stderr.write(`grok-review-ci: ${err.message}\n`);
+    } else if (err instanceof GrokTimeoutError) {
+      process.stderr.write(`grok-review-ci: ${err.message}\n`);
+    } else {
+      process.stderr.write(`grok-review-ci: ${err instanceof Error ? err.stack ?? err.message : String(err)}\n`);
+    }
+    process.exit(2);
+  }
+
+  if (result.format === "empty") {
+    const body = "## Grok review\n\nNo diff to review — skipping.";
+    process.stdout.write(body + "\n");
+    writeSummary(args.summaryOut, body);
+    process.exit(0);
+  }
+
+  // Should be "json" since we asked for it.
+  if (result.format !== "json") {
+    process.stderr.write(`grok-review-ci: unexpected result format ${result.format}\n`);
+    process.exit(2);
+  }
+
+  const review = result.json;
+
+  // Gate evaluation
+  const verdictGated = args.gateOn.includes(review.verdict);
+  const failingScore =
+    args.minScore !== undefined
+      ? Object.entries(review.scores).find(([, v]) => v < args.minScore!)
+      : undefined;
+  const gated = verdictGated || !!failingScore;
+  const gateReason = verdictGated
+    ? `verdict \`${review.verdict}\` is in --gate-on=${args.gateOn.join(",")}`
+    : failingScore
+      ? `score \`${failingScore[0]}=${failingScore[1]}\` < --min-score=${args.minScore}`
+      : null;
+
+  const md = renderMarkdown(review, gated, gateReason);
+  process.stdout.write(md + "\n");
+  writeSummary(args.summaryOut, md);
+
+  if (args.jsonOut) {
+    writeFileSync(args.jsonOut, JSON.stringify(review, null, 2) + "\n");
+  }
+
+  process.exit(gated ? 1 : 0);
+}
+
+main().catch((err) => {
+  process.stderr.write(`grok-review-ci: fatal: ${err instanceof Error ? err.stack ?? err.message : String(err)}\n`);
+  process.exit(2);
+});

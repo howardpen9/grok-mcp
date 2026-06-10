@@ -157,7 +157,9 @@ Optional: `model` to override the default Grok model; `timeout` (seconds) to ext
 { "base_ref": "main", "focus": "security" }
 ```
 
-If `diff` is omitted, runs `git diff <base_ref>...HEAD` in `cwd` (defaults to your host's working directory). Returns a markdown review with verdict, per-dimension scores (correctness / readability / architecture / security / performance), and concrete fix-it items.
+If `diff` is omitted, runs `git diff <base_ref>...HEAD` in `cwd` (defaults to your host's working directory). Returns a markdown review by default with verdict, per-dimension scores (correctness / readability / architecture / security / performance), and concrete fix-it items.
+
+Pass `"format": "json"` to get machine-parseable output suitable for CI gating — see [Use as a PR gate](#use-as-a-pr-gate-ci).
 
 ### `grok_consult`
 
@@ -205,12 +207,56 @@ grok-4 is a reasoning model and long prompts routinely take longer than two minu
 
 On timeout the error includes any partial output Grok produced before the deadline, so you don't lose a near-complete answer.
 
+## Use as a PR gate (CI)
+
+`grok-mcp` ships a `grok-review-ci` bin **and** a composite GitHub Action so Grok can review every PR and fail the check on `block`.
+
+Drop this into `.github/workflows/grok-review.yml` in your repo:
+
+```yaml
+name: Grok review
+on: { pull_request: { branches: [main] } }
+permissions: { contents: read, pull-requests: write }
+jobs:
+  grok:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: howardpen9/grok-mcp/.github/actions/grok-review@main
+        with:
+          xai-api-key: ${{ secrets.XAI_API_KEY }}
+          gate-on: block      # also accepts: block,request_changes
+          # focus: security   # optional
+          # min-score: 6      # optional — fail any dimension below this
+```
+
+The action posts a sticky PR comment with verdict + per-dimension scores + concrete blockers, and exits non-zero (failing the check) when the verdict matches `gate-on`. Full example with comments: [`examples/workflows/grok-review.yml`](./examples/workflows/grok-review.yml).
+
+Want JSON straight from the tool instead? Pass `format: "json"` to `grok_review` — same schema as the bin emits, suitable for any pipeline:
+
+```json
+{
+  "verdict": "block",
+  "summary": "Unparameterised SQL query in src/db.ts.",
+  "scores": { "correctness": 4, "readability": 7, "architecture": 5, "security": 2, "performance": 8 },
+  "blockers": [
+    { "severity": "critical", "title": "SQL injection", "file": "src/db.ts", "line": 42,
+      "reason": "User input concatenated directly into the query.",
+      "fix": "Use the parameterised form `db.query(sql, [userId])`." }
+  ],
+  "notes": []
+}
+```
+
 ## Roadmap
 
-- **v0.1** — four stateless tools, stdio transport (current)
-- **Discoverability push (v0.1.3, shipped)** — naming unification, MCP Registry submission, Smithery, glama.ai, stronger positioning. See [`docs/improvement-plan.md`](./docs/improvement-plan.md) for the full plan and [`CHANGELOG.md`](./CHANGELOG.md) for what landed.
-- **v0.2** — server-side session persistence so `grok_consult` can take a `conversation_id`
-- **v0.3** — streaming responses through MCP `progress` notifications
+- **v0.1** — four stateless tools, stdio transport
+- **Discoverability push (v0.1.3, shipped)** — naming unification, MCP Registry, Smithery, glama.ai, stronger positioning. See [`docs/improvement-plan.md`](./docs/improvement-plan.md) and [`CHANGELOG.md`](./CHANGELOG.md).
+- **v0.2 (current)** — `grok_review` JSON mode + `grok-review-ci` bin + GitHub Action for PR gating.
+- **v0.3** — server-side session persistence so `grok_consult` can take a `conversation_id`
+- **v0.4** — streaming responses through MCP `progress` notifications
 
 ## Development
 

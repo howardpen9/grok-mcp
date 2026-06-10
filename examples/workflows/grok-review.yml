@@ -1,0 +1,35 @@
+# Example: gate PRs with a Grok review.
+#
+# 1. Copy this file to .github/workflows/grok-review.yml in your repo.
+# 2. Add XAI_API_KEY as a repo secret (Settings → Secrets and variables → Actions).
+# 3. Open a PR — Grok will post a sticky review comment and fail the check on `block`.
+#
+# Get an API key at https://console.x.ai (pay-per-call, no subscription cap).
+
+name: Grok review
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  grok-review:
+    runs-on: ubuntu-latest
+    # Skip on PRs from forks — they can't read repo secrets anyway.
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: howardpen9/grok-mcp/.github/actions/grok-review@main
+        with:
+          xai-api-key: ${{ secrets.XAI_API_KEY }}
+          gate-on: block           # also accepts: block,request_changes
+          # focus: security        # optional — narrow the review
+          # min-score: 6           # optional — fail any dimension below this
+          # comment: 'true'        # sticky PR comment, default on

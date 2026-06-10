@@ -157,7 +157,9 @@ Settings → Cline → MCP Servers：
 { "base_ref": "main", "focus": "security" }
 ```
 
-沒給 `diff` 就跑 `git diff <base_ref>...HEAD`。回傳 markdown 評審，含整體判決、五維度評分（correctness / readability / architecture / security / performance）、具體修正建議。
+沒給 `diff` 就跑 `git diff <base_ref>...HEAD`。預設回傳 markdown 評審，含整體判決、五維度評分（correctness / readability / architecture / security / performance）、具體修正建議。
+
+傳 `"format": "json"` 可以拿到機器可讀的 JSON 輸出，適合 CI gate — 詳見下方 [當 PR gate 用](#當-pr-gate-用ci)。
 
 ### `grok_consult`
 
@@ -205,12 +207,56 @@ grok-4 是 reasoning model，長 prompt 動輒超過兩分鐘。Server 預設單
 
 超時時，錯誤訊息會附上 Grok 在截止前已產生的 partial 輸出，避免快完成的答案整個丟失。
 
+## 當 PR gate 用（CI）
+
+`grok-mcp` 內附 `grok-review-ci` bin 跟 composite GitHub Action，讓 Grok 在每個 PR 評審並在 `block` 時擋下 check。
+
+複製進你 repo 的 `.github/workflows/grok-review.yml`：
+
+```yaml
+name: Grok review
+on: { pull_request: { branches: [main] } }
+permissions: { contents: read, pull-requests: write }
+jobs:
+  grok:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: howardpen9/grok-mcp/.github/actions/grok-review@main
+        with:
+          xai-api-key: ${{ secrets.XAI_API_KEY }}
+          gate-on: block      # 也可以 block,request_changes
+          # focus: security   # 可選
+          # min-score: 6      # 可選 — 任一維度低於此值就 fail
+```
+
+Action 會在 PR 留 sticky comment（含 verdict、各維度分數、具體 blockers），並在 verdict 命中 `gate-on` 時讓 check 失敗。完整範例：[`examples/workflows/grok-review.yml`](./examples/workflows/grok-review.yml)。
+
+想直接從 tool 拿 JSON？對 `grok_review` 傳 `format: "json"`，回傳 schema 跟 bin 輸出一致，可塞進任何 pipeline：
+
+```json
+{
+  "verdict": "block",
+  "summary": "src/db.ts 有未參數化的 SQL query。",
+  "scores": { "correctness": 4, "readability": 7, "architecture": 5, "security": 2, "performance": 8 },
+  "blockers": [
+    { "severity": "critical", "title": "SQL injection", "file": "src/db.ts", "line": 42,
+      "reason": "使用者輸入直接串接進 query。",
+      "fix": "改用參數化 query：`db.query(sql, [userId])`。" }
+  ],
+  "notes": []
+}
+```
+
 ## Roadmap
 
-- **v0.1** — 四個 stateless tool、stdio transport（目前）
+- **v0.1** — 四個 stateless tool、stdio transport
 - **Discoverability push（v0.1.3，已上）** — 統一命名、MCP Registry submission、Smithery、glama.ai 上架、加強定位。完整計畫見 [`docs/improvement-plan.md`](./docs/improvement-plan.md)，實際改了什麼見 [`CHANGELOG.md`](./CHANGELOG.md)。
-- **v0.2** — server 端 session 持久化，`grok_consult` 可帶 `conversation_id`
-- **v0.3** — 透過 MCP `progress` notification 做 streaming
+- **v0.2（這版）** — `grok_review` JSON mode + `grok-review-ci` bin + GitHub Action 做 PR gate。
+- **v0.3** — server 端 session 持久化，`grok_consult` 可帶 `conversation_id`
+- **v0.4** — 透過 MCP `progress` notification 做 streaming
 
 ## 開發
 

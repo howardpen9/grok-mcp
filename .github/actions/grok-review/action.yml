@@ -1,0 +1,145 @@
+name: 'Grok PR Review'
+description: 'Gate this PR with a Grok JSON review (verdict + scores + blockers). Optionally posts a sticky comment and fails the check on `block`.'
+author: 'howardpen9'
+branding:
+  icon: 'shield'
+  color: 'purple'
+
+inputs:
+  xai-api-key:
+    description: 'xAI API key (recommended). Required unless the runner already has the grok CLI logged in via OAuth.'
+    required: false
+  base-ref:
+    description: 'Git ref to diff against. Defaults to origin/<pull_request.base.ref>.'
+    required: false
+    default: ''
+  focus:
+    description: 'Optional focus area (e.g. security, performance, API design).'
+    required: false
+    default: ''
+  model:
+    description: 'Grok model override.'
+    required: false
+    default: ''
+  gate-on:
+    description: 'Comma-separated verdicts that fail the check. Default: block.'
+    required: false
+    default: 'block'
+  min-score:
+    description: 'Fail if any dimension score < this (0-10). Empty disables the check.'
+    required: false
+    default: ''
+  timeout-seconds:
+    description: 'Per-call timeout for Grok. Default 600s — grok reasoning can be slow.'
+    required: false
+    default: '600'
+  comment:
+    description: 'Post the review as a sticky PR comment (requires pull-requests: write).'
+    required: false
+    default: 'true'
+  grok-version:
+    description: 'Version of the grok-cli-mcp npm package to use.'
+    required: false
+    default: 'latest'
+
+outputs:
+  verdict:
+    description: 'approve | approve_with_comments | request_changes | block'
+    value: ${{ steps.review.outputs.verdict }}
+  gated:
+    description: 'true if the PR was gated (would fail the check)'
+    value: ${{ steps.review.outputs.gated }}
+  summary-path:
+    description: 'Path to the markdown summary file inside the runner workspace.'
+    value: ${{ steps.review.outputs.summary_path }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Resolve base ref
+      id: base
+      shell: bash
+      run: |
+        if [ -n "${{ inputs.base-ref }}" ]; then
+          echo "ref=${{ inputs.base-ref }}" >> "$GITHUB_OUTPUT"
+        elif [ -n "${{ github.event.pull_request.base.ref }}" ]; then
+          echo "ref=origin/${{ github.event.pull_request.base.ref }}" >> "$GITHUB_OUTPUT"
+        else
+          echo "ref=origin/main" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Ensure base ref is fetched
+      shell: bash
+      run: |
+        BASE='${{ steps.base.outputs.ref }}'
+        # Strip origin/ prefix for fetch
+        BRANCH="${BASE#origin/}"
+        echo "Fetching $BRANCH so we can diff against $BASE..."
+        git fetch --no-tags --depth=1 origin "$BRANCH" || \
+          git fetch --no-tags origin "$BRANCH" || true
+
+    - name: Install grok CLI
+      shell: bash
+      run: |
+        if ! command -v grok >/dev/null 2>&1; then
+          curl -fsSL https://x.ai/cli/install.sh | bash
+          echo "$HOME/.grok/bin" >> "$GITHUB_PATH"
+        fi
+
+    - name: Run Grok review
+      id: review
+      shell: bash
+      env:
+        XAI_API_KEY: ${{ inputs.xai-api-key }}
+        GROK_MCP_TIMEOUT: ${{ inputs.timeout-seconds }}000
+      run: |
+        set -uo pipefail
+        JSON_OUT="${RUNNER_TEMP:-/tmp}/grok-review.json"
+        SUMMARY_OUT="${RUNNER_TEMP:-/tmp}/grok-review.md"
+
+        ARGS=(
+          --base "${{ steps.base.outputs.ref }}"
+          --gate-on "${{ inputs.gate-on }}"
+          --timeout "${{ inputs.timeout-seconds }}"
+          --json-out "$JSON_OUT"
+          --summary-out "$SUMMARY_OUT"
+        )
+        [ -n "${{ inputs.focus }}" ] && ARGS+=(--focus "${{ inputs.focus }}")
+        [ -n "${{ inputs.model }}" ] && ARGS+=(--model "${{ inputs.model }}")
+        [ -n "${{ inputs.min-score }}" ] && ARGS+=(--min-score "${{ inputs.min-score }}")
+
+        set +e
+        npx -y -p "grok-cli-mcp@${{ inputs.grok-version }}" grok-review-ci "${ARGS[@]}"
+        EXIT=$?
+        set -e
+
+        echo "summary_path=$SUMMARY_OUT" >> "$GITHUB_OUTPUT"
+        echo "json_path=$JSON_OUT" >> "$GITHUB_OUTPUT"
+
+        if [ -f "$JSON_OUT" ]; then
+          VERDICT=$(node -e "console.log(require(process.argv[1]).verdict)" "$JSON_OUT")
+          echo "verdict=$VERDICT" >> "$GITHUB_OUTPUT"
+        else
+          echo "verdict=error" >> "$GITHUB_OUTPUT"
+        fi
+
+        if [ "$EXIT" = "0" ]; then
+          echo "gated=false" >> "$GITHUB_OUTPUT"
+        else
+          echo "gated=true" >> "$GITHUB_OUTPUT"
+        fi
+
+        # Always append the summary to the workflow run page.
+        if [ -f "$SUMMARY_OUT" ]; then
+          cat "$SUMMARY_OUT" >> "$GITHUB_STEP_SUMMARY"
+        fi
+
+        # Preserve exit code so the check passes/fails correctly.
+        exit $EXIT
+
+    - name: Post sticky PR comment
+      if: ${{ always() && inputs.comment == 'true' && github.event_name == 'pull_request' && steps.review.outputs.summary_path != '' }}
+      uses: marocchino/sticky-pull-request-comment@v2
+      with:
+        header: grok-review
+        path: ${{ steps.review.outputs.summary_path }}

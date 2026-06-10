@@ -1,10 +1,11 @@
 {
   "name": "grok-cli-mcp",
-  "version": "0.1.3",
-  "description": "MCP server that wraps the xAI Grok CLI — give Claude Code, Cursor, Cline, and any MCP host four tools (grok_review, grok_challenge, grok_consult, grok_chat) so they can use Grok as a peer code reviewer, adversarial bug hunter, and second-opinion consultant.",
+  "version": "0.2.0",
+  "description": "MCP server that wraps the xAI Grok CLI — give Claude Code, Cursor, Cline, and any MCP host four tools (grok_review, grok_challenge, grok_consult, grok_chat) so they can use Grok as a peer code reviewer, adversarial bug hunter, and second-opinion consultant. Ships a `grok-review-ci` bin + GitHub Action so Grok can gate your PRs in CI.",
   "type": "module",
   "bin": {
-    "grok-cli-mcp": "dist/index.js"
+    "grok-cli-mcp": "dist/index.js",
+    "grok-review-ci": "dist/ci-review.js"
   },
   "main": "dist/index.js",
   "mcpName": "io.github.howardpen9/grok-mcp",
@@ -39,7 +40,10 @@
     "bug-hunter",
     "second-opinion",
     "agent-tools",
-    "llm-tools"
+    "llm-tools",
+    "pr-gate",
+    "ci",
+    "github-action"
   ],
   "author": "Howard Peng <howard.peng.tw@gmail.com>",
   "license": "MIT",
