@@ -5,12 +5,30 @@
 # 3. Open a PR — Grok will post a sticky review comment and fail the check on `block`.
 #
 # Get an API key at https://console.x.ai (pay-per-call, no subscription cap).
+#
+# Cost-control notes already baked in below:
+# - paths-ignore skips docs/asset-only PRs (most code reviews aren't useful there)
+# - concurrency cancels outdated runs on the same PR (saves tokens, surfaces latest verdict)
+# - skips dependabot/renovate (dep-bump reviews are usually low signal)
+# - skips when PR carries the `skip-grok-review` label (manual opt-out)
 
 name: Grok review
 
 on:
   pull_request:
     branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - 'LICENSE'
+      - 'assets/**'
+      - 'docs/**'
+      - 'examples/**'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
+
+concurrency:
+  group: grok-review-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -19,8 +37,11 @@ permissions:
 jobs:
   grok-review:
     runs-on: ubuntu-latest
-    # Skip on PRs from forks — they can't read repo secrets anyway.
-    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository
+      && github.event.pull_request.user.login != 'dependabot[bot]'
+      && github.event.pull_request.user.login != 'renovate[bot]'
+      && !contains(github.event.pull_request.labels.*.name, 'skip-grok-review')
     steps:
       - uses: actions/checkout@v4
         with:

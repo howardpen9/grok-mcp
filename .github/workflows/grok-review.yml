@@ -3,6 +3,22 @@ name: Grok review
 on:
   pull_request:
     branches: [main]
+    # Skip pure-docs / asset-only PRs — they almost never need an AI review
+    # and burn API tokens with low signal.
+    paths-ignore:
+      - '**/*.md'
+      - 'LICENSE'
+      - 'assets/**'
+      - 'docs/**'
+      - 'examples/**'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
+
+# Cancel an outdated run when new commits land on the same PR.
+# Saves API tokens AND surfaces the latest verdict faster.
+concurrency:
+  group: grok-review-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -12,7 +28,14 @@ jobs:
   grok-review:
     runs-on: ubuntu-latest
     # Skip on forks (no access to secrets).
-    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+    # Skip on dependabot / renovate PRs — automated dep bumps are noisy
+    # and a Grok review on them is rarely actionable.
+    # Skip when the PR carries a `skip-grok-review` label (manual opt-out).
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository
+      && github.event.pull_request.user.login != 'dependabot[bot]'
+      && github.event.pull_request.user.login != 'renovate[bot]'
+      && !contains(github.event.pull_request.labels.*.name, 'skip-grok-review')
     steps:
       - uses: actions/checkout@v4
         with:
