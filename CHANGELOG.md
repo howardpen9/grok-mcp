@@ -2,6 +2,21 @@
 
 All notable changes to this project are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-06-10
+
+### Added
+- **JSON output mode for `grok_review`.** Pass `format: "json"` to get a structured verdict (`approve` / `approve_with_comments` / `request_changes` / `block`) with per-dimension scores (0–10) and a typed `blockers[]` list (severity, file, line, reason, fix). Default stays `markdown` for back-compat.
+- **`grok-review-ci` bin.** New CLI that runs the review in JSON mode against a git diff, writes a markdown summary to `$GITHUB_STEP_SUMMARY`, and exits non-zero on gated verdicts. Supports `--gate-on`, `--min-score`, `--focus`, `--diff-file`, `--summary-out`, `--json-out`. Available as `npx -y -p grok-cli-mcp grok-review-ci`.
+- **Composite GitHub Action `howardpen9/grok-mcp/.github/actions/grok-review@main`.** Installs grok CLI, runs the review, posts a sticky PR comment, fails the check on `block`. See [`examples/workflows/grok-review.yml`](./examples/workflows/grok-review.yml).
+- Dogfood workflow `.github/workflows/grok-review.yml` running the local build on this repo's own PRs.
+
+### Changed
+- `grok_review` tool description now mentions the JSON / CI gating use case.
+- `package.json` keywords add `pr-gate`, `ci`, `github-action`.
+
+### Why this matters
+Before v0.2 the review was a markdown blob — useful as a second opinion, but a *suggestion*. v0.2 turns it into a *gate*: structured verdict + concrete blockers + exit code → an opinion that can actually block a merge. This is the inversion the project needed to graduate from "optional consultant" to "CI infrastructure."
+
 ## [0.1.3] - 2026-06-06
 
 ### Changed
