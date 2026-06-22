@@ -1,6 +1,6 @@
 {
   "name": "grok-cli-mcp",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "MCP server that wraps the xAI Grok CLI — give Claude Code, Cursor, Cline, and any MCP host four tools (grok_review, grok_challenge, grok_consult, grok_chat) so they can use Grok as a peer code reviewer, adversarial bug hunter, and second-opinion consultant. Ships a `grok-review-ci` bin + GitHub Action so Grok can gate your PRs in CI.",
   "type": "module",
   "bin": {

@@ -2,6 +2,21 @@
 
 All notable changes to this project are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-06-22
+
+### Added
+- **Direct xAI API backend.** The server can now call xAI's OpenAI-compatible `/chat/completions` endpoint directly via Node's built-in `fetch` — no `grok` CLI install required and no new dependencies. Cleaner errors and a smaller setup.
+- **`GROK_MCP_BACKEND`** (`api` / `cli` / `auto`). `auto` (default) uses the API when `XAI_API_KEY` is set, otherwise falls back to the `grok` CLI. The active backend is logged to stderr at startup.
+- **`GROK_MCP_MODEL`** (default `grok-4`) and **`GROK_MCP_BASE_URL`** (default `https://api.x.ai/v1`) to configure the API backend.
+- `GrokApiError` for HTTP / transport failures (caught by `grok-review-ci`); timeouts in API mode surface as the existing `GrokTimeoutError`.
+
+### Changed
+- Startup probe is now backend-aware (`checkBackend`) — it no longer warns about a missing `grok` binary when running in API mode.
+- README prerequisites, configuration, and authentication sections document the two backends.
+
+### Why this matters
+Shelling out to the `grok` CLI was the biggest install hurdle: every user had to `curl | bash` a binary before the MCP server worked. With an `XAI_API_KEY`, the server now talks to xAI directly out of the box — faster to set up, fewer moving parts, and the CLI path stays available for OAuth users who prefer it.
+
 ## [0.2.0] - 2026-06-10
 
 ### Added

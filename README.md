@@ -36,11 +36,13 @@ Four tools, all stateless, all stdout-only:
 ## Prerequisites
 
 - Node.js ≥ 18
-- The Grok CLI installed:
-  ```bash
-  curl -fsSL https://x.ai/cli/install.sh | bash
-  ```
-- An auth method — either browser OAuth (`grok` once interactively) **or** an `XAI_API_KEY` from [console.x.ai](https://console.x.ai). See [Authentication](#authentication) below.
+- A backend (the server picks one automatically — see [Backends](#backends)):
+  - **API mode (recommended, zero install):** an `XAI_API_KEY` from [console.x.ai](https://console.x.ai). The server calls xAI's HTTP API directly — no extra binary needed.
+  - **CLI mode:** the Grok CLI installed, used when no `XAI_API_KEY` is set:
+    ```bash
+    curl -fsSL https://x.ai/cli/install.sh | bash
+    ```
+    Then authenticate with browser OAuth (run `grok` once interactively). See [Authentication](#authentication) below.
 
 ## Install
 
@@ -54,14 +56,14 @@ npx grok-cli-mcp
 
 ## Authentication
 
-The wrapped Grok CLI supports two auth methods; `grok-mcp` inherits whichever is active.
+There are two auth methods, each tied to a [backend](#backends):
 
-| Method | Best for | Rate limits |
-|--------|----------|-------------|
-| **API key** (`XAI_API_KEY` env var) | MCP / CI / automation | Pay-per-call, no subscription cap |
-| **Browser OAuth** (`grok` interactive login) | Local interactive use | Subject to your grok.com plan tier |
+| Method | Backend | Best for | Rate limits |
+|--------|---------|----------|-------------|
+| **API key** (`XAI_API_KEY` env var) | API mode — no `grok` binary needed | MCP / CI / automation | Pay-per-call, no subscription cap |
+| **Browser OAuth** (`grok` interactive login) | CLI mode | Local interactive use | Subject to your grok.com plan tier |
 
-Per [xAI's auth precedence](https://docs.x.ai/docs/api-reference#authentication), `XAI_API_KEY` always wins over `~/.grok/auth.json`. So you can keep your browser login for interactive `grok` use and override it *just for this MCP server* by setting `XAI_API_KEY` in the server's env block:
+Setting `XAI_API_KEY` switches the server to [API mode](#backends), so you can keep your browser login for interactive `grok` use and use a key *just for this MCP server* via its env block:
 
 ```json
 {
@@ -191,11 +193,21 @@ Returns severity-ranked issues (Critical / High / Medium / Low) with concrete re
 
 | Env var | Default | Purpose |
 |---------|---------|---------|
-| `XAI_API_KEY` | *(unset — falls back to OAuth)* | API key from [console.x.ai](https://console.x.ai). When set, overrides `~/.grok/auth.json` and switches the server to pay-per-call billing with no subscription rate cap. See [Authentication](#authentication). |
-| `GROK_MCP_BIN` | `grok` | Path to the `grok` binary |
+| `XAI_API_KEY` | *(unset — falls back to OAuth)* | API key from [console.x.ai](https://console.x.ai). When set, the server uses [API mode](#backends) (direct HTTP) and bills pay-per-call with no subscription rate cap. See [Authentication](#authentication). |
+| `GROK_MCP_BACKEND` | `auto` | Which backend to use: `api` (direct HTTP), `cli` (shell out to `grok`), or `auto` (API when `XAI_API_KEY` is set, else CLI). See [Backends](#backends). |
+| `GROK_MCP_MODEL` | `grok-4` | Model used in API mode. (CLI mode reads `~/.grok/config.toml`.) |
+| `GROK_MCP_BASE_URL` | `https://api.x.ai/v1` | API base URL — point at a proxy or compatible gateway in API mode. |
+| `GROK_MCP_BIN` | `grok` | Path to the `grok` binary (CLI mode only) |
 | `GROK_MCP_TIMEOUT` | `300000` | Default per-call timeout in milliseconds |
 
-Model defaults live in the Grok CLI itself (`~/.grok/config.toml`).
+### Backends
+
+The server can reach Grok two ways and chooses one at startup (it logs which to stderr):
+
+- **API mode** — calls xAI's OpenAI-compatible `/chat/completions` endpoint directly using Node's built-in `fetch`. No `grok` binary required, cleaner errors, pay-per-call. Selected when `XAI_API_KEY` is set, or forced with `GROK_MCP_BACKEND=api`.
+- **CLI mode** — shells out to the installed `grok` binary (supports browser OAuth). Selected when no `XAI_API_KEY` is set, or forced with `GROK_MCP_BACKEND=cli`.
+
+Force a mode with `GROK_MCP_BACKEND`. In API mode, set the model with `GROK_MCP_MODEL`; in CLI mode, model defaults live in `~/.grok/config.toml`.
 
 ### Timeouts
 
