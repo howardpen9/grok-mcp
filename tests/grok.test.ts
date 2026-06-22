@@ -8,7 +8,7 @@ vi.mock("node:child_process", () => ({
 }));
 
 // Import after the mock is registered.
-const { runGrok, GrokCliError, GrokTimeoutError, checkGrokAvailable } = await import(
+const { runGrok, GrokCliError, GrokTimeoutError, GrokApiError, checkGrokAvailable } = await import(
   "../src/grok.ts"
 );
 
@@ -28,13 +28,18 @@ function makeChild(): FakeChild {
 
 beforeEach(() => {
   spawnMock.mockReset();
+  // Pin the CLI backend so these tests exercise the spawn path regardless of
+  // whether XAI_API_KEY happens to be set in the surrounding environment.
+  vi.stubEnv("GROK_MCP_BACKEND", "cli");
 });
 
 afterEach(() => {
   vi.useRealTimers();
+  vi.unstubAllEnvs();
+  vi.unstubAllGlobals();
 });
 
-describe("runGrok", () => {
+describe("runGrok (cli backend)", () => {
   it("resolves with trimmed stdout on success", async () => {
     const child = makeChild();
     spawnMock.mockReturnValue(child);
@@ -126,6 +131,77 @@ describe("runGrok", () => {
     await expect(promise).rejects.toThrow(/timed out after 0s/);
     await expect(promise).rejects.toThrow(/half an answer/);
     await expect(promise).rejects.toThrow(/timeout/i);
+  });
+});
+
+describe("runGrok (api backend)", () => {
+  function useApiBackend() {
+    vi.stubEnv("GROK_MCP_BACKEND", "api");
+    vi.stubEnv("XAI_API_KEY", "test-key");
+  }
+
+  it("posts to the chat-completions endpoint and returns the message content", async () => {
+    useApiBackend();
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      text: async () => JSON.stringify({ choices: [{ message: { content: "  hello from grok  " } }] }),
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await runGrok("hi", { model: "grok-4" });
+    expect(result.stdout).toBe("hello from grok");
+    expect(result.exitCode).toBe(0);
+    expect(spawnMock).not.toHaveBeenCalled();
+
+    const [url, init] = fetchMock.mock.calls[0]!;
+    expect(url).toBe("https://api.x.ai/v1/chat/completions");
+    const body = JSON.parse((init as { body: string }).body);
+    expect(body.model).toBe("grok-4");
+    expect(body.messages).toEqual([{ role: "user", content: "hi" }]);
+    expect((init as { headers: Record<string, string> }).headers.authorization).toBe(
+      "Bearer test-key",
+    );
+  });
+
+  it("honours GROK_MCP_BASE_URL and GROK_MCP_MODEL", async () => {
+    useApiBackend();
+    vi.stubEnv("GROK_MCP_BASE_URL", "https://proxy.local/v1/");
+    vi.stubEnv("GROK_MCP_MODEL", "grok-3");
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      text: async () => JSON.stringify({ choices: [{ message: { content: "ok" } }] }),
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await runGrok("hi");
+    const [url, init] = fetchMock.mock.calls[0]!;
+    expect(url).toBe("https://proxy.local/v1/chat/completions");
+    expect(JSON.parse((init as { body: string }).body).model).toBe("grok-3");
+  });
+
+  it("throws GrokApiError on a non-ok HTTP response", async () => {
+    useApiBackend();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: false,
+        status: 401,
+        statusText: "Unauthorized",
+        text: async () => "invalid api key",
+      })),
+    );
+    await expect(runGrok("hi")).rejects.toBeInstanceOf(GrokApiError);
+    await expect(runGrok("hi")).rejects.toMatchObject({ status: 401 });
+  });
+
+  it("throws GrokApiError when api backend is forced without a key", async () => {
+    vi.stubEnv("GROK_MCP_BACKEND", "api");
+    vi.stubEnv("XAI_API_KEY", "");
+    await expect(runGrok("hi")).rejects.toBeInstanceOf(GrokApiError);
   });
 });
 

@@ -8,7 +8,7 @@
  */
 import { readFileSync, writeFileSync, appendFileSync } from "node:fs";
 import { runReview, ReviewParseError, type ReviewJson } from "./tools/review.js";
-import { GrokCliError, GrokTimeoutError } from "./grok.js";
+import { GrokCliError, GrokTimeoutError, GrokApiError } from "./grok.js";
 
 interface CliArgs {
   base: string;
@@ -178,6 +178,8 @@ async function main(): Promise<void> {
     if (err instanceof ReviewParseError) {
       process.stderr.write(`grok-review-ci: ${err.message}\n\nRaw Grok output:\n${err.rawOutput}\n`);
     } else if (err instanceof GrokCliError) {
+      process.stderr.write(`grok-review-ci: ${err.message}\n`);
+    } else if (err instanceof GrokApiError) {
       process.stderr.write(`grok-review-ci: ${err.message}\n`);
     } else if (err instanceof GrokTimeoutError) {
       process.stderr.write(`grok-review-ci: ${err.message}\n`);

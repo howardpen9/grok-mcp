@@ -9,7 +9,7 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { zodToJsonSchema } from "zod-to-json-schema";
-import { checkGrokAvailable } from "./grok.js";
+import { checkBackend } from "./grok.js";
 import { grokChat } from "./tools/chat.js";
 import { grokReview } from "./tools/review.js";
 import { grokConsult } from "./tools/consult.js";
@@ -78,12 +78,12 @@ async function main() {
     }
   });
 
-  // Startup check: warn (to stderr, never stdout) if grok CLI missing.
-  const probe = await checkGrokAvailable();
+  // Startup check: log the active backend (to stderr, never stdout).
+  const probe = await checkBackend();
   if (!probe.ok) {
-    process.stderr.write(`[grok-mcp] WARN: ${probe.reason}\n`);
+    process.stderr.write(`[grok-mcp] WARN (${probe.backend}): ${probe.detail}\n`);
   } else {
-    process.stderr.write(`[grok-mcp] grok CLI detected: ${probe.version}\n`);
+    process.stderr.write(`[grok-mcp] backend=${probe.backend}: ${probe.detail}\n`);
   }
 
   const transport = new StdioServerTransport();
