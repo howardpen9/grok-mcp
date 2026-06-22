@@ -7,9 +7,9 @@
 [![npm version](https://img.shields.io/npm/v/grok-cli-mcp.svg)](https://www.npmjs.com/package/grok-cli-mcp)
 [![MCP Registry](https://img.shields.io/badge/MCP%20Registry-published-success)](https://registry.modelcontextprotocol.io/)
 
-> Use Grok (via the official xAI [Grok CLI](https://x.ai/news/grok-build-cli)) as a **peer code reviewer, adversary, and consultant** inside Claude Code, Cursor, Cline, OpenClaw, and any other MCP host.
+> Use Grok as a **peer code reviewer, adversary, and consultant** inside Claude Code, Cursor, Cline, OpenClaw, and any other MCP host — talking to xAI's API directly (just an `XAI_API_KEY`, no install) or via the official [Grok CLI](https://x.ai/news/grok-build-cli).
 
-`grok-mcp` (npm: [`grok-cli-mcp`](https://www.npmjs.com/package/grok-cli-mcp)) is a [Model Context Protocol](https://modelcontextprotocol.io) server that wraps the `grok` CLI. It gives your primary agent (Claude, Cursor, etc.) four tools so it can delegate to Grok for second opinions without leaving the session:
+`grok-mcp` (npm: [`grok-cli-mcp`](https://www.npmjs.com/package/grok-cli-mcp)) is a [Model Context Protocol](https://modelcontextprotocol.io) server for Grok. It gives your primary agent (Claude, Cursor, etc.) four tools so it can delegate to Grok for second opinions without leaving the session. As of **v0.3.0** it talks to xAI's API directly — no `grok` binary required — and still supports the CLI for OAuth users:
 
 - `grok_review` — structured diff review with per-dimension scores
 - `grok_challenge` — adversarial bug/race/security hunting

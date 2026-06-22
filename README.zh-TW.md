@@ -7,9 +7,9 @@
 [![npm version](https://img.shields.io/npm/v/grok-cli-mcp.svg)](https://www.npmjs.com/package/grok-cli-mcp)
 [![MCP Registry](https://img.shields.io/badge/MCP%20Registry-published-success)](https://registry.modelcontextprotocol.io/)
 
-> 讓 Claude Code、Cursor、Cline、OpenClaw 等 MCP host 透過官方 xAI [Grok CLI](https://x.ai/news/grok-build-cli)，把 **Grok 當成 code reviewer、adversary 與第二意見顧問** 使用。
+> 讓 Claude Code、Cursor、Cline、OpenClaw 等 MCP host 把 **Grok 當成 code reviewer、adversary 與第二意見顧問** 使用 — 可直連 xAI API（只要一把 `XAI_API_KEY`，免安裝），也可透過官方 [Grok CLI](https://x.ai/news/grok-build-cli)。
 
-`grok-mcp`（npm 套件名 [`grok-cli-mcp`](https://www.npmjs.com/package/grok-cli-mcp)）是 [Model Context Protocol](https://modelcontextprotocol.io) server，將 `grok` CLI 包裝成工具，讓你的主要 agent（Claude、Cursor…）可以隨時叫 Grok 幫忙 review、挑戰、諮詢，而不用切換 session：
+`grok-mcp`（npm 套件名 [`grok-cli-mcp`](https://www.npmjs.com/package/grok-cli-mcp)）是 [Model Context Protocol](https://modelcontextprotocol.io) server，讓你的主要 agent（Claude、Cursor…）可以隨時叫 Grok 幫忙 review、挑戰、諮詢，而不用切換 session。從 **v0.3.0** 起它直接打 xAI API — 不需要 `grok` binary — 並保留 CLI 路徑給 OAuth 使用者：
 
 - `grok_review` — 結構化 diff review，附五維度評分
 - `grok_challenge` — 對抗式找 bug / race / security hole
@@ -36,11 +36,13 @@ English: [README.md](./README.md)
 ## 前置需求
 
 - Node.js ≥ 18
-- 已安裝 Grok CLI：
-  ```bash
-  curl -fsSL https://x.ai/cli/install.sh | bash
-  ```
-- 一種認證方式 — 瀏覽器 OAuth（互動跑一次 `grok`）**或**到 [console.x.ai](https://console.x.ai) 拿一把 `XAI_API_KEY`。詳見下方 [認證](#認證)。
+- 一個後端（server 會自動挑選 — 見 [後端 Backends](#後端-backends)）：
+  - **API 模式（推薦，零安裝）：** 到 [console.x.ai](https://console.x.ai) 拿一把 `XAI_API_KEY`。Server 直接打 xAI HTTP API，不需要額外 binary。
+  - **CLI 模式：** 安裝 Grok CLI，在沒設 `XAI_API_KEY` 時使用：
+    ```bash
+    curl -fsSL https://x.ai/cli/install.sh | bash
+    ```
+    然後用瀏覽器 OAuth 認證（互動跑一次 `grok`）。詳見下方 [認證](#認證)。
 
 ## 安裝
 
@@ -54,14 +56,14 @@ npx grok-cli-mcp
 
 ## 認證
 
-包裝的 Grok CLI 支援兩種認證方式，`grok-mcp` 繼承當前啟用的那一種。
+有兩種認證方式，各自對應一種 [後端](#後端-backends)：
 
-| 方式 | 適合場景 | Rate limit |
-|------|---------|-----------|
-| **API key**（`XAI_API_KEY` 環境變數）| MCP / CI / 自動化 | 按次計費，無訂閱配額上限 |
-| **瀏覽器 OAuth**（互動跑 `grok` 登入）| 本機互動使用 | 依你的 grok.com 訂閱方案 |
+| 方式 | 後端 | 適合場景 | Rate limit |
+|------|------|---------|-----------|
+| **API key**（`XAI_API_KEY` 環境變數）| API 模式 — 不需要 `grok` binary | MCP / CI / 自動化 | 按次計費，無訂閱配額上限 |
+| **瀏覽器 OAuth**（互動跑 `grok` 登入）| CLI 模式 | 本機互動使用 | 依你的 grok.com 訂閱方案 |
 
-依照 [xAI 認證優先順序](https://docs.x.ai/docs/api-reference#authentication)，`XAI_API_KEY` 永遠勝過 `~/.grok/auth.json`。所以可以保留瀏覽器登入給互動式 `grok` 用，**只在這個 MCP server 的 env block 加 `XAI_API_KEY`** 來覆蓋：
+設定 `XAI_API_KEY` 會把 server 切到 [API 模式](#後端-backends)，所以你可以保留瀏覽器登入給互動式 `grok` 用，**只在這個 MCP server 的 env block 加 `XAI_API_KEY`**：
 
 ```json
 {
@@ -191,11 +193,21 @@ Server 不存 state，caller 每次帶完整 history。一般 MCP host 會自動
 
 | 環境變數 | 預設值 | 用途 |
 |---------|--------|------|
-| `XAI_API_KEY` | *（未設，fallback 到 OAuth）* | 到 [console.x.ai](https://console.x.ai) 拿。設定後會覆蓋 `~/.grok/auth.json`，切到按次計費、無訂閱配額上限。詳見 [認證](#認證)。 |
-| `GROK_MCP_BIN` | `grok` | grok binary 路徑 |
+| `XAI_API_KEY` | *（未設，fallback 到 OAuth）* | 到 [console.x.ai](https://console.x.ai) 拿。設定後 server 走 [API 模式](#後端-backends)（直連 HTTP），按次計費、無訂閱配額上限。詳見 [認證](#認證)。 |
+| `GROK_MCP_BACKEND` | `auto` | 要用哪個後端：`api`（直連 HTTP）、`cli`（呼叫 `grok`）、或 `auto`（有 `XAI_API_KEY` 走 API，否則走 CLI）。見 [後端 Backends](#後端-backends)。 |
+| `GROK_MCP_MODEL` | `grok-4` | API 模式使用的 model。（CLI 模式讀 `~/.grok/config.toml`。） |
+| `GROK_MCP_BASE_URL` | `https://api.x.ai/v1` | API base URL — API 模式下可指向 proxy 或相容 gateway。 |
+| `GROK_MCP_BIN` | `grok` | grok binary 路徑（僅 CLI 模式） |
 | `GROK_MCP_TIMEOUT` | `300000` | 預設單次 call timeout（毫秒） |
 
-預設 model 設定在 Grok CLI 自己的 `~/.grok/config.toml`。
+### 後端 Backends
+
+Server 有兩種方式接觸 Grok，啟動時會自動挑一種（並把選到的後端印到 stderr）：
+
+- **API 模式** — 用 Node 內建 `fetch` 直接打 xAI 的 OpenAI 相容端點 `/chat/completions`。不需要 `grok` binary、錯誤更乾淨、按次計費。設了 `XAI_API_KEY` 就會選它，或用 `GROK_MCP_BACKEND=api` 強制。
+- **CLI 模式** — 呼叫已安裝的 `grok` binary（支援瀏覽器 OAuth）。沒設 `XAI_API_KEY` 時選它，或用 `GROK_MCP_BACKEND=cli` 強制。
+
+用 `GROK_MCP_BACKEND` 強制指定模式。API 模式下用 `GROK_MCP_MODEL` 設 model；CLI 模式的預設 model 設定在 `~/.grok/config.toml`。
 
 ### Timeout
 
