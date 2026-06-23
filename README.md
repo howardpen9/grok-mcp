@@ -266,9 +266,10 @@ Want JSON straight from the tool instead? Pass `format: "json"` to `grok_review`
 
 - **v0.1** — four stateless tools, stdio transport
 - **Discoverability push (v0.1.3, shipped)** — naming unification, MCP Registry, Smithery, glama.ai, stronger positioning. See [`docs/improvement-plan.md`](./docs/improvement-plan.md) and [`CHANGELOG.md`](./CHANGELOG.md).
-- **v0.2 (current)** — `grok_review` JSON mode + `grok-review-ci` bin + GitHub Action for PR gating.
-- **v0.3** — server-side session persistence so `grok_consult` can take a `conversation_id`
-- **v0.4** — streaming responses through MCP `progress` notifications
+- **v0.2 (shipped)** — `grok_review` JSON mode + `grok-review-ci` bin + GitHub Action for PR gating.
+- **v0.3 (current)** — direct xAI API backend (no `grok` CLI required); `GROK_MCP_BACKEND` api/cli/auto.
+- **v0.4** — server-side session persistence so `grok_consult` can take a `conversation_id`
+- **v0.5** — streaming responses through MCP `progress` notifications
 
 ## Development
 

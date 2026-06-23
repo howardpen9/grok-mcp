@@ -266,9 +266,10 @@ Action 會在 PR 留 sticky comment（含 verdict、各維度分數、具體 blo
 
 - **v0.1** — 四個 stateless tool、stdio transport
 - **Discoverability push（v0.1.3，已上）** — 統一命名、MCP Registry submission、Smithery、glama.ai 上架、加強定位。完整計畫見 [`docs/improvement-plan.md`](./docs/improvement-plan.md)，實際改了什麼見 [`CHANGELOG.md`](./CHANGELOG.md)。
-- **v0.2（這版）** — `grok_review` JSON mode + `grok-review-ci` bin + GitHub Action 做 PR gate。
-- **v0.3** — server 端 session 持久化，`grok_consult` 可帶 `conversation_id`
-- **v0.4** — 透過 MCP `progress` notification 做 streaming
+- **v0.2（已上）** — `grok_review` JSON mode + `grok-review-ci` bin + GitHub Action 做 PR gate。
+- **v0.3（這版）** — 直連 xAI API backend（不需要 `grok` CLI）；`GROK_MCP_BACKEND` api/cli/auto。
+- **v0.4** — server 端 session 持久化，`grok_consult` 可帶 `conversation_id`
+- **v0.5** — 透過 MCP `progress` notification 做 streaming
 
 ## 開發
 
