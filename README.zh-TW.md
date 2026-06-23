@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./assets/social-preview.png" alt="grok-mcp — 讓 Claude 把 Grok 當 reviewer、adversary、第二意見顧問用" width="720" />
+  <img src="./assets/social-preview.png" alt="grok-mcp — 讓 Claude 把 Grok 當 reviewer 與嚴謹第二意見顧問使用" width="720" />
 </p>
 
 # grok-mcp
@@ -7,7 +7,7 @@
 [![npm version](https://img.shields.io/npm/v/grok-cli-mcp.svg)](https://www.npmjs.com/package/grok-cli-mcp)
 [![MCP Registry](https://img.shields.io/badge/MCP%20Registry-published-success)](https://registry.modelcontextprotocol.io/)
 
-> 讓 Claude Code、Cursor、Cline、OpenClaw 等 MCP host 把 **Grok 當成 code reviewer、adversary 與第二意見顧問** 使用 — 可直連 xAI API（只要一把 `XAI_API_KEY`，免安裝），也可透過官方 [Grok CLI](https://x.ai/news/grok-build-cli)。
+> 讓 Claude Code、Cursor、Cline、OpenClaw 等 MCP host 把 **Grok 當成 code reviewer 與嚴謹第二意見顧問** 使用 — 可直連 xAI API（只要一把 `XAI_API_KEY`，免安裝），也可透過官方 [Grok CLI](https://x.ai/news/grok-build-cli)。
 
 `grok-mcp`（npm 套件名 [`grok-cli-mcp`](https://www.npmjs.com/package/grok-cli-mcp)）是 [Model Context Protocol](https://modelcontextprotocol.io) server，讓你的主要 agent（Claude、Cursor…）可以隨時叫 Grok 幫忙 review、挑戰、諮詢，而不用切換 session。從 **v0.3.0** 起它直接打 xAI API — 不需要 `grok` binary — 並保留 CLI 路徑給 OAuth 使用者：
 
@@ -20,7 +20,7 @@ English: [README.md](./README.md)
 
 ## 為什麼用 grok-mcp？
 
-市面上其他 "Grok MCP" 套件大多讓 Claude 可以「使用」Grok 的 chat / search / image 能力。`grok-mcp` 反過來：讓你的主要 coding agent（Claude / Cursor）**請 Grok 來 review、挑戰自己的產出**。換一個 model 攻擊主 agent 的盲點，能抓到單模型 loop 找不到的 bug。
+市面上其他 "Grok MCP" 套件大多讓 Claude 可以「使用」Grok 的 chat / search / image 能力。`grok-mcp` 讓你的主要 coding agent（Claude / Cursor）**請 Grok 提供嚴謹的第二意見**。換一個 model 進行徹底審查，通常能抓到單模型 loop 容易忽略的問題。
 
 ## 提供什麼
 
@@ -31,7 +31,7 @@ English: [README.md](./README.md)
 | `grok_chat` | 一次性問答 |
 | `grok_review` | 給 diff（或自動 `git diff main...HEAD`），回結構化 code review |
 | `grok_consult` | 多輪對話，caller 自己重送 history |
-| `grok_challenge` | 對抗模式：請 Grok 找 bug、race condition、security hole |
+| `grok_challenge` | 嚴謹分析：請 Grok 找出 bug、race condition、edge case 與 security 問題 |
 
 ## 前置需求
 

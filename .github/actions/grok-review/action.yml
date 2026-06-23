@@ -1,5 +1,5 @@
 name: 'Grok PR Review'
-description: 'Gate this PR with a Grok JSON review (verdict + scores + blockers). Optionally posts a sticky comment and fails the check on `block`.'
+description: 'Get a rigorous Grok JSON review (verdict + scores + blockers) for this PR. Optionally posts a sticky comment and can fail the check.'
 author: 'howardpen9'
 branding:
   icon: 'shield'

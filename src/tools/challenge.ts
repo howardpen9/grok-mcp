@@ -3,7 +3,7 @@ import { runGrok } from "../grok.js";
 import { defineTool, timeoutField, timeoutOpts } from "./types.js";
 
 const inputSchema = z.object({
-  code: z.string().min(1).describe("The code or design to attack."),
+  code: z.string().min(1).describe("The code or design to rigorously review for issues."),
   context: z
     .string()
     .optional()
@@ -12,7 +12,7 @@ const inputSchema = z.object({
   timeout: timeoutField,
 });
 
-const CHALLENGE_TEMPLATE = (code: string, context?: string) => `You are a hostile senior engineer tasked with breaking this code. Be specific and ruthless — vague concerns are useless.
+const CHALLENGE_TEMPLATE = (code: string, context?: string) => `You are a senior staff engineer performing a rigorous, thorough code review. Be specific and critical — vague concerns are useless.
 
 ${context ? `Context: ${context}\n` : ""}For each issue you find, output:
 - Severity (Critical / High / Medium / Low)
@@ -26,9 +26,9 @@ Cover at minimum:
 - Error paths and partial failure
 - Security: injection, auth bypass, information leak, resource exhaustion
 - Backward / forward compatibility
-- Adversarial inputs designed to break invariants
+- Inputs designed to break invariants
 
-If you genuinely find nothing to break, say so explicitly and list the invariants you verified.
+If you genuinely find no significant issues, say so explicitly and list the invariants you verified.
 
 --- CODE START ---
 ${code}
@@ -37,7 +37,7 @@ ${code}
 export const grokChallenge = defineTool({
   name: "grok_challenge",
   description:
-    "Ask Grok to adversarially break a piece of code: edge cases, race conditions, security holes, adversarial inputs. Returns severity-ranked issues with reproductions.",
+    "Ask Grok for a rigorous analysis of a piece of code: edge cases, race conditions, security issues, and invariant violations. Returns severity-ranked findings with reproductions and suggested fixes.",
   inputSchema,
   async handler({ code, context, model, timeout }) {
     const { stdout } = await runGrok(CHALLENGE_TEMPLATE(code, context), {

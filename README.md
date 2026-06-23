@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./assets/social-preview.png" alt="grok-mcp — MCP server that lets Claude use Grok as a peer reviewer, adversary, and consultant" width="720" />
+  <img src="./assets/social-preview.png" alt="grok-mcp — MCP server that lets Claude use Grok as a peer reviewer and second-opinion consultant" width="720" />
 </p>
 
 # grok-mcp
@@ -7,12 +7,12 @@
 [![npm version](https://img.shields.io/npm/v/grok-cli-mcp.svg)](https://www.npmjs.com/package/grok-cli-mcp)
 [![MCP Registry](https://img.shields.io/badge/MCP%20Registry-published-success)](https://registry.modelcontextprotocol.io/)
 
-> Use Grok as a **peer code reviewer, adversary, and consultant** inside Claude Code, Cursor, Cline, OpenClaw, and any other MCP host — talking to xAI's API directly (just an `XAI_API_KEY`, no install) or via the official [Grok CLI](https://x.ai/news/grok-build-cli).
+> Use Grok as a **peer code reviewer and rigorous second-opinion consultant** inside Claude Code, Cursor, Cline, OpenClaw, and any other MCP host — talking to xAI's API directly (just an `XAI_API_KEY`, no install) or via the official [Grok CLI](https://x.ai/news/grok-build-cli).
 
-`grok-mcp` (npm: [`grok-cli-mcp`](https://www.npmjs.com/package/grok-cli-mcp)) is a [Model Context Protocol](https://modelcontextprotocol.io) server for Grok. It gives your primary agent (Claude, Cursor, etc.) four tools so it can delegate to Grok for second opinions without leaving the session. As of **v0.3.0** it talks to xAI's API directly — no `grok` binary required — and still supports the CLI for OAuth users:
+`grok-mcp` (npm: [`grok-cli-mcp`](https://www.npmjs.com/package/grok-cli-mcp)) is a [Model Context Protocol](https://modelcontextprotocol.io) server for Grok. It gives your primary agent (Claude, Cursor, etc.) four tools so it can delegate to Grok for high-quality second opinions and rigorous validation without leaving the session. As of **v0.3.0** it talks to xAI's API directly — no `grok` binary required — and still supports the CLI for OAuth users:
 
 - `grok_review` — structured diff review with per-dimension scores
-- `grok_challenge` — adversarial bug/race/security hunting
+- `grok_challenge` — thorough analysis for bugs, races, edge cases and security issues
 - `grok_consult` — multi-turn consultation (caller owns history)
 - `grok_chat` — one-shot questions
 
@@ -20,7 +20,7 @@ English | [繁體中文](./README.zh-TW.md)
 
 ## Why grok-mcp?
 
-Most "Grok MCP" packages expose Grok's chat/search/image capabilities so Claude can *use* Grok. `grok-mcp` does the opposite: it lets your main coding agent (Claude/Cursor/…) **ask Grok to review and attack its own work**. A different model challenging your primary catches bugs single-model loops miss.
+Most "Grok MCP" packages expose Grok's chat/search/image capabilities so Claude can *use* Grok. `grok-mcp` lets your main coding agent (Claude/Cursor/…) **ask Grok for a rigorous second opinion** on its own work. A different model providing thorough review often catches issues that single-model loops miss.
 
 ## What you get
 
@@ -31,7 +31,7 @@ Four tools, all stateless, all stdout-only:
 | `grok_chat` | One-shot prompt → Grok's reply |
 | `grok_review` | Pass a unified diff (or auto-grab `git diff main...HEAD`) and get a per-dimension code review |
 | `grok_consult` | Replay a message history for multi-turn — caller owns the thread |
-| `grok_challenge` | Adversarial: ask Grok to find every bug, race, edge case, and security hole |
+| `grok_challenge` | Rigorous analysis: ask Grok to surface bugs, race conditions, edge cases, and security issues |
 
 ## Prerequisites
 
