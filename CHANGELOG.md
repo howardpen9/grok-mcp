@@ -2,6 +2,22 @@
 
 All notable changes to this project are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-07-02
+
+### Added
+- **Remote MCP mode (Streamable HTTP).** New `grok-mcp-http` bin (`dist/http.js`) serves the same four tools over Streamable HTTP, so grok-mcp can be added to Claude Desktop / Claude Web via **Settings → Connectors → Add custom connector** with a plain HTTPS URL — no OAuth required. Stateless: a fresh `Server` + `StreamableHTTPServerTransport` pair per request (SDK 1.29+ stateless transports are single-request-use), so it scales horizontally with no sticky sessions.
+- **`GROK_MCP_PATH_SECRET`.** Moves the endpoint from `/mcp` to `/mcp/<secret>`. Claude's connector dialog can't send custom headers, so a URL path secret is the pragmatic way to keep a self-hosted endpoint private — without it, anyone who finds the URL spends your xAI credits. The server warns loudly at startup when unset.
+- **`GROK_MCP_ALLOWED_HOSTS`** (exact-match Host allowlist, DNS-rebinding guard), **`GROK_MCP_CORS_ORIGINS`**, **`GROK_MCP_BODY_LIMIT`**, plus `GET /health` for platform health checks.
+- `Dockerfile` (multi-stage, health-checked) and `.env.example` for one-command deploys to Railway / Fly / Render.
+- `src/server.ts` — shared `createGrokMcpServer()` factory used by both the stdio bin and the HTTP bin.
+
+### Changed
+- `@modelcontextprotocol/sdk` dependency raised from `^1.0.4` to `^1.29.0` (Streamable HTTP transport requires it; 1.29 was already the installed version).
+- **Remote mode disables `grok_review` auto-diff.** Over HTTP the server has no access to the caller's repo, and letting public callers spawn `git` against arbitrary `cwd` would be a hole — `diff` must be passed explicitly (`GROK_MCP_REMOTE=1`, set automatically by the HTTP entry point).
+
+### Why this matters
+Until now grok-mcp only ran where a stdio process could be spawned (Claude Code, Cursor, Cline). Claude Web and Claude mobile can't spawn processes — they need a URL. v0.4 makes grok-mcp deployable as that URL while keeping the stdio path untouched, and does it with a security default (path secret + no remote auto-diff) instead of an open spending endpoint.
+
 ## [0.3.0] - 2026-06-22
 
 ### Added

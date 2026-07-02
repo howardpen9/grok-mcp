@@ -76,7 +76,7 @@ describe("grok_challenge", () => {
   it("wraps code in adversarial template", async () => {
     await grokChallenge.handler({ code: "function add(a,b){return a-b}", context: "TS arithmetic" });
     const prompt = runGrokMock.mock.calls[0]?.[0] as string;
-    expect(prompt).toContain("hostile senior engineer");
+    expect(prompt).toContain("senior staff engineer performing a rigorous, thorough code review");
     expect(prompt).toContain("Context: TS arithmetic");
     expect(prompt).toContain("--- CODE START ---");
     expect(prompt).toContain("function add(a,b){return a-b}");

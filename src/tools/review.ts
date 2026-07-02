@@ -222,6 +222,11 @@ export async function runReview(opts: {
   cwd?: string;
   timeout?: number;
 }): Promise<{ format: "markdown"; markdown: string } | { format: "json"; json: ReviewJson; raw: string } | { format: "empty" }> {
+  if (!opts.diff && process.env.GROK_MCP_REMOTE === "1") {
+    throw new Error(
+      "grok_review on a remote server requires the `diff` parameter — the server has no access to your local repo, so auto `git diff` is disabled. Pass the diff text explicitly.",
+    );
+  }
   const actualDiff = opts.diff ?? (await gitDiff(opts.base_ref ?? "main", opts.cwd));
   if (!actualDiff.trim()) return { format: "empty" };
 

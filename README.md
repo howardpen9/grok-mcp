@@ -139,9 +139,47 @@ Settings → Cline → MCP Servers:
 }
 ```
 
+### Claude Desktop (local, no hosting needed)
+
+Claude Desktop still supports local stdio servers: **Settings → Developer → Edit Config** (`claude_desktop_config.json`), then paste the same JSON block as Claude Code above.
+
+### Claude Web / Claude Desktop connectors (remote, v0.4+)
+
+Claude's **Settings → Connectors → Add custom connector** dialog needs an HTTPS URL, not a command — so deploy the bundled Streamable HTTP server and paste its URL:
+
+```bash
+# 1. Generate a path secret (keeps strangers from spending your xAI credits)
+openssl rand -base64 32 | tr '+/' '-_'
+
+# 2. Deploy anywhere that runs Node (Railway / Fly / Render / a VPS).
+#    A multi-stage Dockerfile ships in the repo:
+docker build -t grok-mcp . && docker run \
+  -e XAI_API_KEY=xai-... \
+  -e GROK_MCP_PATH_SECRET=<secret-from-step-1> \
+  -p 3000:3000 grok-mcp
+
+# ...or without Docker:
+XAI_API_KEY=xai-... GROK_MCP_PATH_SECRET=<secret> npx -y -p grok-cli-mcp grok-mcp-http
+```
+
+Then add the connector in Claude with the URL:
+
+```
+https://your-host.example.com/mcp/<secret-from-step-1>
+```
+
+No OAuth needed — leave the Client ID/Secret fields blank. Claude only starts an OAuth flow if the server asks for it.
+
+Remote-mode notes:
+
+- **Treat the URL as a credential.** The path secret is what stands between the internet and your xAI bill. Rotate it by changing the env var.
+- **`grok_review` needs an explicit `diff` over HTTP** — the server can't see your local repo, so auto `git diff` is disabled in remote mode.
+- **Keep `GROK_MCP_TIMEOUT` below your platform's request timeout** (and disable scale-to-zero) — grok-4 reasoning can run for minutes.
+- `GET /health` is available for platform health checks; see [`.env.example`](./.env.example) for all knobs (`GROK_MCP_ALLOWED_HOSTS`, `GROK_MCP_CORS_ORIGINS`, ...).
+
 ### Any other MCP host
 
-`grok-mcp` speaks plain stdio MCP. Point any client at `npx -y grok-cli-mcp` and it works.
+`grok-mcp` speaks plain stdio MCP. Point any client at `npx -y grok-cli-mcp` and it works. HTTP hosts can point at the remote endpoint above instead.
 
 ## Tool reference
 
@@ -267,9 +305,10 @@ Want JSON straight from the tool instead? Pass `format: "json"` to `grok_review`
 - **v0.1** — four stateless tools, stdio transport
 - **Discoverability push (v0.1.3, shipped)** — naming unification, MCP Registry, Smithery, glama.ai, stronger positioning. See [`docs/improvement-plan.md`](./docs/improvement-plan.md) and [`CHANGELOG.md`](./CHANGELOG.md).
 - **v0.2 (shipped)** — `grok_review` JSON mode + `grok-review-ci` bin + GitHub Action for PR gating.
-- **v0.3 (current)** — direct xAI API backend (no `grok` CLI required); `GROK_MCP_BACKEND` api/cli/auto.
-- **v0.4** — server-side session persistence so `grok_consult` can take a `conversation_id`
-- **v0.5** — streaming responses through MCP `progress` notifications
+- **v0.3 (shipped)** — direct xAI API backend (no `grok` CLI required); `GROK_MCP_BACKEND` api/cli/auto.
+- **v0.4 (current)** — remote MCP mode: `grok-mcp-http` Streamable HTTP server for Claude Web / Claude Desktop custom connectors, with path-secret auth, Dockerfile, and `.env.example`.
+- **v0.5** — server-side session persistence so `grok_consult` can take a `conversation_id`
+- **v0.6** — streaming responses through MCP `progress` notifications; OAuth + per-user key store for shared hosted instances
 
 ## Development
 

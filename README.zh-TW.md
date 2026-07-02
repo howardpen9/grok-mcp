@@ -139,6 +139,44 @@ Settings → Cline → MCP Servers：
 }
 ```
 
+### Claude Desktop（本地,不用架伺服器）
+
+Claude Desktop 仍支援本地 stdio server:**Settings → Developer → Edit Config**(`claude_desktop_config.json`),貼上面 Claude Code 那段 JSON 即可。
+
+### Claude Web / Claude Desktop connector(遠端,v0.4+)
+
+Claude 的 **Settings → Connectors → Add custom connector** 對話框要的是 HTTPS 網址、不是指令 — 所以把內建的 Streamable HTTP server 部署起來,貼它的網址:
+
+```bash
+# 1. 產生路徑密鑰(防止陌生人燒你的 xAI credits)
+openssl rand -base64 32 | tr '+/' '-_'
+
+# 2. 部署到任何能跑 Node 的地方(Railway / Fly / Render / VPS)。
+#    repo 內附 multi-stage Dockerfile:
+docker build -t grok-mcp . && docker run \
+  -e XAI_API_KEY=xai-... \
+  -e GROK_MCP_PATH_SECRET=<步驟1的密鑰> \
+  -p 3000:3000 grok-mcp
+
+# ...不用 Docker 也行:
+XAI_API_KEY=xai-... GROK_MCP_PATH_SECRET=<密鑰> npx -y -p grok-cli-mcp grok-mcp-http
+```
+
+然後在 Claude 加入 connector,網址填:
+
+```
+https://your-host.example.com/mcp/<步驟1的密鑰>
+```
+
+不需要 OAuth — Client ID/Secret 欄位留白即可。只有伺服器主動要求時 Claude 才會走 OAuth 流程。
+
+遠端模式注意事項:
+
+- **把網址當成密碼看待。** 路徑密鑰是網路世界和你的 xAI 帳單之間唯一的門。換掉環境變數即可輪替。
+- **HTTP 模式下 `grok_review` 必須明確傳 `diff`** — 伺服器看不到你本地的 repo,遠端模式停用了自動 `git diff`。
+- **`GROK_MCP_TIMEOUT` 要設得比平台的 request timeout 低**(並關掉 scale-to-zero)— grok-4 推理可能跑好幾分鐘。
+- `GET /health` 可給平台做健康檢查;全部設定項見 [`.env.example`](./.env.example)(`GROK_MCP_ALLOWED_HOSTS`、`GROK_MCP_CORS_ORIGINS`⋯)。
+
 ### 其他 MCP host
 
 `grok-mcp` 跑標準 stdio MCP。任何 client 指向 `npx -y grok-cli-mcp` 即可。
@@ -267,9 +305,10 @@ Action 會在 PR 留 sticky comment（含 verdict、各維度分數、具體 blo
 - **v0.1** — 四個 stateless tool、stdio transport
 - **Discoverability push（v0.1.3，已上）** — 統一命名、MCP Registry submission、Smithery、glama.ai 上架、加強定位。完整計畫見 [`docs/improvement-plan.md`](./docs/improvement-plan.md)，實際改了什麼見 [`CHANGELOG.md`](./CHANGELOG.md)。
 - **v0.2（已上）** — `grok_review` JSON mode + `grok-review-ci` bin + GitHub Action 做 PR gate。
-- **v0.3（這版）** — 直連 xAI API backend（不需要 `grok` CLI）；`GROK_MCP_BACKEND` api/cli/auto。
-- **v0.4** — server 端 session 持久化，`grok_consult` 可帶 `conversation_id`
-- **v0.5** — 透過 MCP `progress` notification 做 streaming
+- **v0.3（已上）** — 直連 xAI API backend（不需要 `grok` CLI）；`GROK_MCP_BACKEND` api/cli/auto。
+- **v0.4（這版）** — 遠端 MCP 模式：`grok-mcp-http` Streamable HTTP server，可加入 Claude Web / Claude Desktop 自訂 connector；含路徑密鑰驗證、Dockerfile、`.env.example`。
+- **v0.5** — server 端 session 持久化，`grok_consult` 可帶 `conversation_id`
+- **v0.6** — 透過 MCP `progress` notification 做 streaming；共用主機的 OAuth + per-user key store
 
 ## 開發
 
