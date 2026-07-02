@@ -1,10 +1,11 @@
 {
   "name": "grok-cli-mcp",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "MCP server that wraps the xAI Grok — give Claude Code, Cursor, Cline, and any MCP host four tools (grok_review, grok_challenge, grok_consult, grok_chat) so they can use Grok as a peer code reviewer and rigorous second-opinion consultant. Ships a `grok-review-ci` bin + GitHub Action so Grok can help gate your PRs in CI.",
   "type": "module",
   "bin": {
     "grok-cli-mcp": "dist/index.js",
+    "grok-mcp-http": "dist/http.js",
     "grok-review-ci": "dist/ci-review.js"
   },
   "main": "dist/index.js",
@@ -59,12 +60,16 @@
     "node": ">=18"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.4",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
     "strip-ansi": "^7.1.0",
     "zod": "^3.23.8",
     "zod-to-json-schema": "^3.23.0"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
     "@types/node": "^20.14.0",
     "typescript": "^5.5.0",
     "vitest": "^2.0.0"
