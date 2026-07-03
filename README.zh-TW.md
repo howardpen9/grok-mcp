@@ -9,10 +9,10 @@
 
 > 讓 Claude Code、Cursor、Cline、OpenClaw 等 MCP host 把 **Grok 當成 code reviewer 與嚴謹第二意見顧問** 使用 — 可直連 xAI API（只要一把 `XAI_API_KEY`，免安裝），也可透過官方 [Grok CLI](https://x.ai/news/grok-build-cli)。
 
-`grok-mcp`（npm 套件名 [`grok-cli-mcp`](https://www.npmjs.com/package/grok-cli-mcp)）是 [Model Context Protocol](https://modelcontextprotocol.io) server，讓你的主要 agent（Claude、Cursor…）可以隨時叫 Grok 幫忙 review、挑戰、諮詢，而不用切換 session。從 **v0.3.0** 起它直接打 xAI API — 不需要 `grok` binary — 並保留 CLI 路徑給 OAuth 使用者：
+`grok-mcp`（npm 套件名 [`grok-cli-mcp`](https://www.npmjs.com/package/grok-cli-mcp)）是 [Model Context Protocol](https://modelcontextprotocol.io) server，給你的主要 agent（Claude、Cursor…）四個 tool，讓它能把工作委派給 Grok 取得高品質第二意見與嚴謹驗證，而不用離開 session。從 **v0.3.0** 起它直接打 xAI API — 不需要 `grok` binary — 並保留 CLI 路徑給 OAuth 使用者：
 
 - `grok_review` — 結構化 diff review，附五維度評分
-- `grok_challenge` — 對抗式找 bug / race / security hole
+- `grok_challenge` — 徹底分析 bug、race、edge case 與 security 問題
 - `grok_consult` — 多輪諮詢（caller 自己重送 history）
 - `grok_chat` — 一次性問答
 
@@ -24,7 +24,7 @@ English: [README.md](./README.md)
 
 ## 提供什麼
 
-四個 tool，全部 stateless：
+四個 tool，全部 stateless、全部只讀 stdout：
 
 | Tool | 用途 |
 |------|------|
@@ -139,19 +139,19 @@ Settings → Cline → MCP Servers：
 }
 ```
 
-### Claude Desktop（本地,不用架伺服器）
+### Claude Desktop（本地，不用架伺服器）
 
-Claude Desktop 仍支援本地 stdio server:**Settings → Developer → Edit Config**(`claude_desktop_config.json`),貼上面 Claude Code 那段 JSON 即可。
+Claude Desktop 仍支援本地 stdio server：**Settings → Developer → Edit Config**（`claude_desktop_config.json`），貼上面 Claude Code 那段 JSON 即可。
 
-### Claude Web / Claude Desktop connector(遠端,v0.4+)
+### Claude Web / Claude Desktop connector（遠端，v0.4+）
 
-Claude 的 **Settings → Connectors → Add custom connector** 對話框要的是 HTTPS 網址、不是指令 — 所以把內建的 Streamable HTTP server 部署起來,貼它的網址:
+Claude 的 **Settings → Connectors → Add custom connector** 對話框要的是 HTTPS 網址、不是指令 — 所以把內建的 Streamable HTTP server 部署起來，貼它的網址：
 
 ```bash
-# 1. 產生路徑密鑰(防止陌生人燒你的 xAI credits)
+# 1. 產生路徑密鑰（防止陌生人燒你的 xAI credits）
 openssl rand -base64 32 | tr '+/' '-_'
 
-# 2. 部署到任何能跑 Node 的地方(Railway / Fly / Render / VPS)。
+# 2. 部署到任何能跑 Node 的地方（Railway / Fly / Render / VPS）。
 #    repo 內附 multi-stage Dockerfile:
 docker build -t grok-mcp . && docker run \
   -e XAI_API_KEY=xai-... \
@@ -162,7 +162,7 @@ docker build -t grok-mcp . && docker run \
 XAI_API_KEY=xai-... GROK_MCP_PATH_SECRET=<密鑰> npx -y -p grok-cli-mcp grok-mcp-http
 ```
 
-然後在 Claude 加入 connector,網址填:
+然後在 Claude 加入 connector，網址填：
 
 ```
 https://your-host.example.com/mcp/<步驟1的密鑰>
@@ -170,16 +170,16 @@ https://your-host.example.com/mcp/<步驟1的密鑰>
 
 不需要 OAuth — Client ID/Secret 欄位留白即可。只有伺服器主動要求時 Claude 才會走 OAuth 流程。
 
-遠端模式注意事項:
+遠端模式注意事項：
 
 - **把網址當成密碼看待。** 路徑密鑰是網路世界和你的 xAI 帳單之間唯一的門。換掉環境變數即可輪替。
-- **HTTP 模式下 `grok_review` 必須明確傳 `diff`** — 伺服器看不到你本地的 repo,遠端模式停用了自動 `git diff`。
-- **`GROK_MCP_TIMEOUT` 要設得比平台的 request timeout 低**(並關掉 scale-to-zero)— grok-4 推理可能跑好幾分鐘。
-- `GET /health` 可給平台做健康檢查;全部設定項見 [`.env.example`](./.env.example)(`GROK_MCP_ALLOWED_HOSTS`、`GROK_MCP_CORS_ORIGINS`⋯)。
+- **HTTP 模式下 `grok_review` 必須明確傳 `diff`** — 伺服器看不到你本地的 repo，遠端模式停用了自動 `git diff`。
+- **`GROK_MCP_TIMEOUT` 要設得比平台的 request timeout 低**（並關掉 scale-to-zero）— grok-4 推理可能跑好幾分鐘。
+- `GET /health` 可給平台做健康檢查；全部設定項見 [`.env.example`](./.env.example)（`GROK_MCP_ALLOWED_HOSTS`、`GROK_MCP_CORS_ORIGINS`…）。
 
 ### 其他 MCP host
 
-`grok-mcp` 跑標準 stdio MCP。任何 client 指向 `npx -y grok-cli-mcp` 即可。
+`grok-mcp` 跑標準 stdio MCP。任何 client 指向 `npx -y grok-cli-mcp` 即可。HTTP host 則可以改指向上面的遠端 endpoint。
 
 ## Tool 用法
 
@@ -197,7 +197,7 @@ https://your-host.example.com/mcp/<步驟1的密鑰>
 { "base_ref": "main", "focus": "security" }
 ```
 
-沒給 `diff` 就跑 `git diff <base_ref>...HEAD`。預設回傳 markdown 評審，含整體判決、五維度評分（correctness / readability / architecture / security / performance）、具體修正建議。
+沒給 `diff` 就在 `cwd`（預設是你 host 的工作目錄）跑 `git diff <base_ref>...HEAD`。預設回傳 markdown 評審，含整體判決、五維度評分（correctness / readability / architecture / security / performance）、具體修正建議。
 
 傳 `"format": "json"` 可以拿到機器可讀的 JSON 輸出，適合 CI gate — 詳見下方 [當 PR gate 用](#當-pr-gate-用ci)。
 
