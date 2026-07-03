@@ -47,7 +47,10 @@ export function createGrokMcpServer(): Server {
     tools: TOOLS.map((t) => ({
       name: t.name,
       description: t.description,
-      inputSchema: zodToJsonSchema(t.inputSchema, { target: "openApi3" }) as Record<string, unknown>,
+      inputSchema: zodToJsonSchema(t.inputSchema, { target: "jsonSchema7", $refStrategy: "none" }) as Record<
+        string,
+        unknown
+      >,
     })),
   }));
 
